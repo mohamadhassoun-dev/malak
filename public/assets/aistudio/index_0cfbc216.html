@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ملك الصفيحة زكرياعروب | سيستم المطبخ والكاشير الإحترافي</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { main: '#be123c', dark: '#881337', gold: '#f59e0b', darkgold: '#d97706', whatsapp: '#25D366' }
+                    },
+                    fontFamily: { tajawal: ['Tajawal', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col pb-10">
+
+    <!-- Header العلوي الموحد -->
+    <header id="main-header" class="dynamic-bg dark:bg-slate-950 text-white shadow-lg sticky top-0 z-45 border-b border-white/10 transition-colors">
+        <div class="max-w-7xl mx-auto px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
+            
+            <!-- Logo & Title -->
+            <div class="flex items-center gap-3">
+                <div class="relative group cursor-pointer" title="تغيير الشعار">
+                    <img id="main-logo" src="" alt="شعار" class="w-12 h-12 object-cover rounded-full border-2 border-amber-400 shadow-md bg-white">
+                    <label for="logo-upload" class="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition cursor-pointer text-white text-xs font-bold admin-only hidden">
+                        <i class="fas fa-camera"></i>
+                    </label>
+                    <input type="file" id="logo-upload" accept="image/*" class="hidden" onchange="uploadLogo(event)">
+                </div>
+                <div>
+                    <h1 id="header-company-name" class="text-lg font-black text-amber-400 tracking-wide">ملك الصفيحة زكرياعروب</h1>
+                    <p id="header-company-sub" class="text-[11px] text-rose-100 dark:text-slate-300 font-medium">
+                        <i class="fas fa-map-marker-alt text-amber-400"></i> طرابلس - القبة | تأسيس 1998 | واتساب: 03416224
+                    </p>
+                </div>
+            </div>
+
+            <!-- أزرار الأقسام (في وضع الإدارة - تظهر الطاولات والتحكم هنا) -->
+            <div id="main-nav-bar" class="hidden items-center gap-1.5 bg-black/30 p-1.5 rounded-xl border border-white/15 flex-wrap">
+                <button onclick="switchMainTab('pos')" id="nav-btn-pos" class="px-3 py-1.5 rounded-lg font-black text-xs transition flex items-center gap-1.5 dynamic-btn text-white shadow"><i class="fas fa-cash-register"></i> الكاشير</button>
+                <button onclick="switchMainTab('tables')" id="nav-btn-tables" class="px-3 py-1.5 rounded-lg font-bold text-xs transition flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white"><i class="fas fa-chair"></i> الطاولات</button>
+                <button onclick="switchMainTab('inventory')" id="nav-btn-inventory" class="px-3 py-1.5 rounded-lg font-bold text-xs transition flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white"><i class="fas fa-boxes"></i> المخزون</button>
+                <button onclick="switchMainTab('menu_edit')" id="nav-btn-menu_edit" class="px-3 py-1.5 rounded-lg font-bold text-xs transition flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white"><i class="fas fa-utensils"></i> القائمة</button>
+                <button onclick="switchMainTab('company')" id="nav-btn-company" class="px-3 py-1.5 rounded-lg font-bold text-xs transition flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white"><i class="fas fa-building"></i> ملف الشركة</button>
+                <button onclick="switchMainTab('transactions')" id="nav-btn-transactions" class="px-3 py-1.5 rounded-lg font-bold text-xs transition flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white"><i class="fas fa-file-invoice-dollar"></i> السجل</button>
+                <button onclick="switchMainTab('reports')" id="nav-btn-reports" class="px-3 py-1.5 rounded-lg font-bold text-xs transition flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white"><i class="fas fa-chart-line"></i> التقارير</button>
+            </div>
+
+            <!-- أزرار نوع الطلب الثلاثة -->
+            <div class="flex items-center gap-1 bg-black/30 p-1 rounded-xl border border-white/20">
+                <button id="tab-hall" onclick="setOrderType('hall')" class="px-3 py-1 rounded-lg font-black text-xs transition flex items-center gap-1 dynamic-btn text-white shadow"><i class="fas fa-chair"></i> صالة</button>
+                <button id="tab-takeaway" onclick="setOrderType('takeaway')" class="px-3 py-1 rounded-lg font-bold text-xs transition flex items-center gap-1 bg-white/10 hover:bg-white/20 text-white"><i class="fas fa-bag-shopping"></i> تيك أواي</button>
+                <button id="tab-delivery" onclick="setOrderType('delivery')" class="px-3 py-1 rounded-lg font-bold text-xs transition flex items-center gap-1 bg-white/10 hover:bg-white/20 text-white"><i class="fas fa-motorcycle"></i> دليفري</button>
+            </div>
+            
+            <!-- Clock -->
+            <div class="hidden sm:flex bg-black/30 px-2.5 py-1 rounded-xl border border-white/20 text-center text-xs">
+                <div id="live-clock" class="font-black text-amber-300 text-xs">--:--:--</div>
+            </div>
+
+            <!-- إعدادات وأزرار مساعدة -->
+            <div class="flex items-center gap-2 flex-wrap">
+                <div class="flex items-center gap-1 bg-black/30 px-2 py-1 rounded-xl border border-white/20 text-xs">
+                    <span class="text-amber-300 font-bold">دولار:</span>
+                    <input type="number" id="usd-rate-input" value="89500" onchange="updateUsdRate(this.value)" class="w-16 bg-slate-900 text-white text-center font-black rounded px-1 py-0.5 border border-white/30 text-xs">
+                </div>
+
+                <div class="hidden md:flex items-center gap-1 bg-black/30 px-2 py-1 rounded-xl border border-white/20 text-xs admin-only hidden">
+                    <span class="text-amber-300 font-bold"><i class="fas fa-palette"></i></span>
+                    <input type="color" id="primary-color-picker" value="#881337" onchange="changeThemeColor(this.value)" class="w-6 h-6 rounded cursor-pointer border-0 bg-transparent">
+                </div>
+
+                <button onclick="toggleDarkMode()" class="bg-black/25 hover:bg-black/40 text-amber-300 px-2.5 py-1.5 rounded-xl text-xs font-bold transition border border-white/10" title="تغيير المظهر">
+                    <i id="theme-icon" class="fas fa-moon"></i>
+                </button>
+
+                <button onclick="exitCustomerMode()" class="bg-amber-500 hover:bg-amber-600 text-slate-900 font-black px-3 py-1.5 rounded-xl text-xs shadow flex items-center gap-1 transition">
+                    <i class="fas fa-lock" id="admin-mode-icon"></i> <span id="admin-mode-btn-text">دخول الإدارة</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 mt-6 w-full flex-grow">
+        
+        <!-- POS Tab -->
+        <div id="tab-content-pos" class="space-y-6">
+
+            <!-- Takeaway Form -->
+            <section id="section-takeaway" class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-4 mb-6 hidden">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end text-xs font-bold">
+                    <div><label class="block mb-1">اسم الزبون:</label><input type="text" id="takeaway-name" class="w-full border rounded-xl p-2.5 bg-white dark:bg-slate-900" placeholder="اسم الزبون"></div>
+                    <div><label class="block mb-1">رقم الهاتف:</label><input type="tel" id="takeaway-phone" class="w-full border rounded-xl p-2.5 bg-white dark:bg-slate-900" placeholder="03416224"></div>
+                    <div><button onclick="sendOrderViaWhatsApp()" class="w-full bg-[#25D366] text-white font-black py-2.5 rounded-xl"><i class="fab fa-whatsapp"></i> إرسال عبر الواتساب</button></div>
+                </div>
+            </section>
+
+            <!-- Delivery Form -->
+            <section id="section-delivery" class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-4 mb-6 hidden">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3 text-xs font-bold">
+                    <div><label class="block mb-1">اسم الزبون:</label><input type="text" id="delivery-name" class="w-full border rounded-xl p-2.5 bg-white dark:bg-slate-900" placeholder="اسم الزبون"></div>
+                    <div><label class="block mb-1">رقم الهاتف:</label><input type="tel" id="delivery-phone" class="w-full border rounded-xl p-2.5 bg-white dark:bg-slate-900" placeholder="03416224"></div>
+                    <div><label class="block mb-1">العنوان:</label><input type="text" id="delivery-address" class="w-full border rounded-xl p-2.5 bg-white dark:bg-slate-900" placeholder="العنوان بالتفصيل"></div>
+                </div>
+                <button onclick="sendOrderViaWhatsApp()" class="w-full bg-[#25D366] text-white font-black py-2.5 rounded-xl text-xs"><i class="fab fa-whatsapp"></i> إرسال طلب التوصيل للواتساب</button>
+            </section>
+
+            <!-- Menu & Cart Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 space-y-4">
+                    <!-- شريط تحكم بحجم الصور وإضافة صنف -->
+                    <div class="flex items-center justify-between bg-white dark:bg-slate-800 p-3.5 rounded-2xl border shadow-sm flex-wrap gap-3">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold text-slate-600 dark:text-slate-300"><i class="fas fa-image text-amber-500"></i> حجم الصور:</span>
+                            <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border text-xs font-bold">
+                                <button onclick="setImageSize('small')" id="img-size-small" class="px-2.5 py-1 rounded-lg transition">صغير</button>
+                                <button onclick="setImageSize('medium')" id="img-size-medium" class="px-2.5 py-1 rounded-lg transition">وسط</button>
+                                <button onclick="setImageSize('large')" id="img-size-large" class="px-2.5 py-1 rounded-lg transition">كبير</button>
+                                <button onclick="setImageSize('hidden')" id="img-size-hidden" class="px-2.5 py-1 rounded-lg transition">إخفاء</button>
+                            </div>
+                        </div>
+                        <button onclick="openAddModal()" class="bg-amber-500 hover:bg-amber-600 text-slate-900 font-extrabold px-3 py-1.5 rounded-xl text-xs shadow flex items-center gap-1 transition admin-only hidden">
+                            <i class="fas fa-plus-circle"></i> إضافة صنف
+                        </button>
+                    </div>
+
+                    <div id="menu-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"></div>
+                </div>
+
+                <div class="lg:col-span-1">
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border p-4 sticky top-20">
+                        <h3 class="font-black text-slate-800 dark:text-slate-100 text-base pb-3 mb-3 border-b" id="cart-box-title">سلة الطلبات</h3>
+                        <div id="cart-items-container" class="space-y-2 max-h-72 overflow-y-auto mb-4"></div>
+                        <div class="pt-3 border-t space-y-2">
+                            <div class="flex items-center justify-between font-extrabold text-sm">
+                                <span>المجموع بالليرة:</span>
+                                <span id="cart-total-price" class="font-black dynamic-text text-lg">0 ل.ل</span>
+                            </div>
+                            <div class="flex items-center justify-between font-extrabold text-xs bg-amber-50 dark:bg-amber-950/40 p-2 rounded-lg border border-amber-200">
+                                <span class="text-amber-700 dark:text-amber-300">المجموع بالدولار ($):</span>
+                                <span id="cart-total-usd" class="font-black text-amber-800 dark:text-amber-400 text-sm">$0.00</span>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-2 pt-1">
+                                <button onclick="sendOrderViaWhatsApp()" class="bg-[#25D366] hover:bg-[#22bf5b] text-white font-extrabold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1 shadow"><i class="fab fa-whatsapp"></i> واتساب</button>
+                                <button onclick="checkoutActiveTable()" class="dynamic-btn text-white font-extrabold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1 shadow"><i class="fas fa-calculator"></i> محاسبة وطباعة</button>
+                            </div>
+                            <button onclick="clearActiveTable()" class="w-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold py-2 rounded-xl text-xs">إفراغ السلة</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tables Management Tab -->
+        <div id="tab-content-tables" class="space-y-6 hidden">
+            <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border p-5">
+                <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+                    <div>
+                        <h2 class="font-black text-slate-800 dark:text-slate-100 text-lg">إدارة طاولات الصالة (للمدير فقط)</h2>
+                        <p class="text-xs text-slate-500">استعرض حالة الطاولات، أضف طاولات جديدة، أو اضغط على الطاولة للتحكم بها</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="openAddTableModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-3.5 py-2 rounded-xl text-xs shadow flex items-center gap-1 transition"><i class="fas fa-plus"></i> إضافة طاولة جديدة</button>
+                        <button onclick="removeSelectedTable()" class="bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold px-3 py-2 rounded-xl border border-rose-200 text-xs transition"><i class="fas fa-trash-alt"></i> حذف الطاولة المحددة</button>
+                    </div>
+                </div>
+                <div id="tables-container" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-4 pb-4"></div>
+            </div>
+        </div>
+
+        <!-- Inventory Tab -->
+        <div id="tab-content-inventory" class="space-y-6 hidden">
+            <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border p-5">
+                <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+                    <h2 class="font-black text-slate-800 dark:text-slate-100 text-lg">إدارة المخزون والمصاريف</h2>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <button onclick="endBusinessDay()" class="bg-rose-600 text-white font-bold px-3 py-2 rounded-xl text-xs"><i class="fas fa-calendar-day"></i> إنهاء يوم العمل</button>
+                        <button onclick="openInventoryModal()" class="dynamic-btn text-white font-bold px-3 py-2 rounded-xl text-xs"><i class="fas fa-plus"></i> إضافة مادة</button>
+                        <button onclick="openExpenseModal()" class="bg-amber-600 text-white font-bold px-3 py-2 rounded-xl text-xs"><i class="fas fa-money-bill-wave"></i> تسجيل مصروف</button>
+                    </div>
+                </div>
+                <!-- Bread Stats -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                    <div class="bg-amber-50 dark:bg-amber-950/30 p-4 rounded-xl border">
+                        <p class="text-xs text-amber-600 font-bold mb-1">الرصيد الأساسي للخبز</p>
+                        <h3 id="bread-initial-stat" class="text-2xl font-black text-amber-700">200 رغيف</h3>
+                    </div>
+                    <div class="bg-rose-50 dark:bg-rose-950/30 p-4 rounded-xl border">
+                        <p class="text-xs text-rose-600 font-bold mb-1">إجمالي الخبز المباع</p>
+                        <h3 id="bread-sold-stat" class="text-2xl font-black dynamic-text">0 رغيف</h3>
+                    </div>
+                    <div class="bg-emerald-50 dark:bg-emerald-950/30 p-4 rounded-xl border flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-emerald-600 font-bold mb-1">المتبقي بالمستودع</p>
+                            <h3 id="bread-remaining-stat" class="text-2xl font-black text-emerald-700">200 رغيف</h3>
+                        </div>
+                        <button onclick="openDirectInventoryEditModal('خبز أسمر')" class="bg-emerald-600 text-white p-2 rounded-xl text-xs font-bold"><i class="fas fa-pen"></i></button>
+                    </div>
+                </div>
+
+                <!-- Tables Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border">
+                        <h3 class="font-bold text-sm mb-3">جدول المواد والمستودع</h3>
+                        <table class="w-full text-xs text-right">
+                            <thead><tr class="border-b text-slate-500"><th class="py-2">المادة</th><th class="py-2">المتبقي</th><th class="py-2">المباع</th><th class="py-2">تعديل</th></tr></thead>
+                            <tbody id="inventory-table-body"></tbody>
+                        </table>
+                    </div>
+                    <div class="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border">
+                        <h3 class="font-bold text-sm mb-3">سجل المصاريف النقدية</h3>
+                        <table class="w-full text-xs text-right">
+                            <thead><tr class="border-b text-slate-500"><th class="py-2">البيان</th><th class="py-2">المبلغ</th><th class="py-2">حذف</th></tr></thead>
+                            <tbody id="expenses-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Menu Management Tab -->
+        <div id="tab-content-menu_edit" class="space-y-6 hidden">
+            <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border p-5">
+                <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+                    <h2 class="font-black text-slate-800 dark:text-slate-100 text-lg">إدارة وتعديل أصناف القائمة والصور والأسعار</h2>
+                    <button onclick="openAddModal()" class="dynamic-btn text-white font-bold px-3.5 py-2 rounded-xl text-xs"><i class="fas fa-plus"></i> إضافة صنف جديد</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-xs text-right">
+                        <thead><tr class="border-b text-slate-500 bg-slate-50 dark:bg-slate-900"><th class="p-3">الصورة</th><th class="p-3">الصنف</th><th class="p-3">السعر</th><th class="p-3">يخصم خبز أسمر؟</th><th class="p-3">تغيير الصورة</th><th class="p-3">إجراءات التعديل والحذف</th></tr></thead>
+                        <tbody id="menu-edit-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Company Profile Tab -->
+        <div id="tab-content-company" class="space-y-6 hidden">
+            <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border p-6 max-w-3xl mx-auto">
+                <div class="border-b pb-3 mb-5">
+                    <h2 class="font-black text-slate-800 dark:text-slate-100 text-lg flex items-center gap-2">
+                        <i class="fas fa-building text-amber-500"></i> ملف الشركة والبيانات المحلية
+                    </h2>
+                    <p class="text-xs text-slate-500">تظهر هذه المعلومات على رأس الإيصالات المطبوعة والتقارير وتطبيق الكاشير.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-bold">
+                    <div>
+                        <label class="block mb-1 text-slate-600 dark:text-slate-300">اسم الشركة / المطعم:</label>
+                        <input type="text" id="comp-name" class="w-full border rounded-xl p-2.5 bg-slate-50 dark:bg-slate-900 font-black text-slate-800 dark:text-white" value="ملك الصفيحة زكرياعروب">
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-slate-600 dark:text-slate-300">رقم الهاتف:</label>
+                        <input type="tel" id="comp-phone" class="w-full border rounded-xl p-2.5 bg-slate-50 dark:bg-slate-900 font-bold" value="03416224">
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-slate-600 dark:text-slate-300">العنوان (الشارع الرئيسي):</label>
+                        <input type="text" id="comp-address" class="w-full border rounded-xl p-2.5 bg-slate-50 dark:bg-slate-900 font-bold" value="شارع الأرز">
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-slate-600 dark:text-slate-300">المدينة:</label>
+                        <input type="text" id="comp-city" class="w-full border rounded-xl p-2.5 bg-slate-50 dark:bg-slate-900 font-bold" value="طرابلس - القبة">
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-slate-600 dark:text-slate-300">الدولة:</label>
+                        <input type="text" id="comp-country" class="w-full border rounded-xl p-2.5 bg-slate-50 dark:bg-slate-900 font-bold" value="لبنان">
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-slate-600 dark:text-slate-300">الرقم المالي (الرقم الضريبي / السجل التجاري):</label>
+                        <input type="text" id="comp-tax" class="w-full border rounded-xl p-2.5 bg-slate-50 dark:bg-slate-900 font-bold" placeholder="مثال: 123456789">
+                    </div>
+                </div>
+
+                <div class="mt-6 pt-4 border-t flex justify-end">
+                    <button onclick="saveCompanyProfile()" class="dynamic-btn text-white font-black px-6 py-3 rounded-xl text-xs shadow flex items-center gap-2">
+                        <i class="fas fa-save"></i> حفظ ملف الشركة
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transactions Tab -->
+        <div id="tab-content-transactions" class="space-y-6 hidden">
+            <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border p-5">
+                <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+                    <div>
+                        <h2 class="font-black text-slate-800 dark:text-slate-100 text-lg">سجل الطلبات والمعاملات والفواتير المطور</h2>
+                        <p class="text-xs text-slate-500">إمكانية التعديل، والبحث، وإعادة طباعة أي فاتورة سابقة حرارياً</p>
+                    </div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <button onclick="clearTransactionsLog()" class="bg-rose-50 hover:bg-rose-100 text-rose-600 px-3 py-2 rounded-xl border border-rose-200 text-xs font-bold transition flex items-center gap-1"><i class="fas fa-trash-alt"></i> مسح السجل بالكامل</button>
+                    </div>
+                </div>
+
+                <!-- شريط البحث والتصفية -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4 bg-slate-50 dark:bg-slate-900 p-3 rounded-xl border">
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-500 mb-1">بحث برقم الفاتورة أو التفاصيل:</label>
+                        <input type="text" id="trx-search-input" onkeyup="renderTransactions()" placeholder="مثال: TRX-123456 أو كفتة..." class="w-full border rounded-lg p-2 text-xs bg-white dark:bg-slate-800 font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-500 mb-1">تصفية بحسب نوع الطلب:</label>
+                        <select id="trx-filter-type" onchange="renderTransactions()" class="w-full border rounded-lg p-2 text-xs bg-white dark:bg-slate-800 font-bold">
+                            <option value="all">كل الأنواع</option>
+                            <option value="طاولة">طاولة (صالة)</option>
+                            <option value="تيك أواي">تيك أواي</option>
+                            <option value="دليفري">دليفري</option>
+                        </select>
+                    </div>
+                    <div class="flex items-end">
+                        <button onclick="resetTrxFilters()" class="w-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold py-2 rounded-lg text-xs"><i class="fas fa-sync-alt"></i> إعادة ضبط التصفية</button>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-xs text-right">
+                        <thead>
+                            <tr class="border-b text-slate-500 bg-slate-50 dark:bg-slate-900">
+                                <th class="p-3">رقم المعاملة</th>
+                                <th class="p-3">النوع</th>
+                                <th class="p-3">التفاصيل والأصناف</th>
+                                <th class="p-3">المجموع</th>
+                                <th class="p-3">الوقت والتاريخ</th>
+                                <th class="p-3 text-center">إجراءات الفاتورة</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactions-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reports Tab -->
+        <div id="tab-content-reports" class="space-y-6 hidden">
+            <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border p-5">
+                <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+                    <h2 class="font-black text-slate-800 dark:text-slate-100 text-lg">التقارير اليومية وحركة الصندوق</h2>
+                    <button onclick="printDailyReport()" class="dynamic-btn text-white font-black px-4 py-2.5 rounded-xl text-xs shadow flex items-center gap-2">
+                        <i class="fas fa-print"></i> طباعة كشف الحساب اليومي
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                    <div class="bg-rose-50 p-4 rounded-xl border"><p class="text-xs font-bold text-rose-600 mb-1">إجمالي المبيعات</p><h3 id="report-total-sales" class="text-2xl font-black dynamic-text">0 ل.ل</h3></div>
+                    <div class="bg-amber-50 p-4 rounded-xl border"><p class="text-xs font-bold text-amber-600 mb-1">إجمالي المصاريف</p><h3 id="report-total-expenses" class="text-2xl font-black text-amber-700">0 ل.ل</h3></div>
+                    <div class="bg-emerald-50 p-4 rounded-xl border"><p class="text-xs font-bold text-emerald-600 mb-1">صافي الصندوق</p><h3 id="report-net-profit" class="text-2xl font-black text-emerald-700">0 ل.ل</h3></div>
+                </div>
+                <!-- Breakdown -->
+                <div class="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border">
+                    <h3 class="font-black text-sm mb-3"><i class="fas fa-receipt dynamic-text"></i> تفصيل الكميات المباعة لكل صنف اليوم</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-xs text-right">
+                            <thead><tr class="border-b text-slate-500"><th class="py-2">اسم الصنف</th><th class="py-2">الكمية المباعة</th><th class="py-2">الإجمالي</th></tr></thead>
+                            <tbody id="items-sales-breakdown-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modals -->
+    <!-- نافذة إضافة طاولة جديدة -->
+    <div id="add-table-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-sm w-full p-5 space-y-4 text-xs font-bold">
+            <h3 class="font-black text-base pb-2 border-b"><i class="fas fa-chair text-amber-500"></i> إضافة طاولة جديدة للصالة</h3>
+            <div>
+                <label class="block mb-1">رقم الطاولة:</label>
+                <input type="number" id="new-table-num-input" class="w-full border rounded-xl p-3 text-base font-black bg-white dark:bg-slate-900" placeholder="مثال: 5">
+            </div>
+            <div class="flex gap-2 pt-2">
+                <button onclick="saveNewTable()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-2.5 rounded-xl text-xs">حفظ الطاولة</button>
+                <button onclick="closeAddTableModal()" class="w-full bg-slate-200 dark:bg-slate-700 font-bold py-2.5 rounded-xl text-xs">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="edit-trx-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-lg w-full p-5 space-y-4 text-xs font-bold">
+            <div class="flex items-center justify-between border-b pb-2">
+                <h3 class="font-black text-base text-slate-800 dark:text-slate-100" id="edit-trx-modal-title">تعديل الفاتورة</h3>
+                <button onclick="closeEditTrxModal()" class="text-slate-400 hover:text-rose-600"><i class="fas fa-times text-base"></i></button>
+            </div>
+            <input type="hidden" id="edit-trx-id-input">
+            
+            <div id="edit-trx-items-list" class="space-y-2 max-h-60 overflow-y-auto"></div>
+
+            <div class="pt-2 border-t flex items-center justify-between text-sm font-black">
+                <span>المجموع التراكمي الجديد:</span>
+                <span id="edit-trx-new-total" class="dynamic-text text-base">0 ل.ل</span>
+            </div>
+
+            <div class="flex gap-2 pt-2">
+                <button onclick="saveTrxChanges()" class="w-full dynamic-btn text-white font-extrabold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1"><i class="fas fa-check"></i> حفظ التعديلات وتحديث السجل</button>
+                <button onclick="closeEditTrxModal()" class="w-full bg-slate-200 dark:bg-slate-700 font-bold py-2.5 rounded-xl text-xs">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="direct-inventory-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-sm w-full p-5 space-y-4">
+            <h3 id="direct-modal-title" class="font-black text-lg pb-2 border-b">تعديل رصيد</h3>
+            <input type="hidden" id="edit-inv-name-target">
+            <div><label class="block mb-1 text-xs font-bold">الكمية:</label><input type="number" id="direct-bread-qty" class="w-full border rounded-xl p-3 text-base font-black bg-white dark:bg-slate-900"></div>
+            <div class="flex gap-2">
+                <button onclick="saveDirectBreadQty()" class="w-full bg-emerald-600 text-white font-bold py-2.5 rounded-xl text-xs">حفظ</button>
+                <button onclick="closeDirectInventoryEditModal()" class="w-full bg-slate-200 dark:bg-slate-700 font-bold py-2.5 rounded-xl text-xs">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="item-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-md w-full p-5 space-y-4">
+            <h3 id="item-modal-title" class="font-black text-lg pb-2 border-b">إضافة أو تعديل صنف</h3>
+            <input type="hidden" id="edit-item-id">
+            <div class="space-y-3 text-xs font-bold">
+                <div><label class="block mb-1">اسم الصنف:</label><input type="text" id="item-name-input" class="w-full border rounded-lg p-2.5 bg-white dark:bg-slate-900"></div>
+                <div><label class="block mb-1">السعر (ل.ل):</label><input type="number" id="item-price-input" class="w-full border rounded-lg p-2.5 bg-white dark:bg-slate-900"></div>
+                <div class="flex items-center gap-2 pt-2">
+                    <input type="checkbox" id="item-deduct-bread" class="w-4 h-4 accent-rose-600 cursor-pointer">
+                    <label for="item-deduct-bread" class="cursor-pointer text-slate-700 dark:text-slate-200 font-extrabold">يخصم رغيف خبز أسمر من المخزون عند البيع</label>
+                </div>
+            </div>
+            <div class="flex gap-2 pt-2 border-t">
+                <button onclick="saveMenuItem()" class="w-full dynamic-btn text-white font-bold py-2.5 rounded-xl text-xs">حفظ الصنف</button>
+                <button onclick="closeModal()" class="w-full bg-slate-200 dark:bg-slate-700 font-bold py-2.5 rounded-xl text-xs">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="inventory-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-md w-full p-5 space-y-4 text-xs font-bold">
+            <div><label class="block mb-1">اسم المادة:</label><input type="text" id="inv-name" class="w-full border rounded-lg p-2.5 bg-white dark:bg-slate-900" placeholder="مثال: لحمة، جبنة..."></div>
+            <div><label class="block mb-1">الكمية:</label><input type="number" id="inv-qty" class="w-full border rounded-lg p-2.5 bg-white dark:bg-slate-900" value="100"></div>
+            <div><label class="block mb-1">الوحدة:</label><input type="text" id="inv-unit" class="w-full border rounded-lg p-2.5 bg-white dark:bg-slate-900" value="رغيف"></div>
+            <div class="flex gap-2 pt-2">
+                <button onclick="saveInventoryItem()" class="w-full dynamic-btn text-white font-bold py-2.5 rounded-xl">حفظ</button>
+                <button onclick="document.getElementById('inventory-modal').classList.add('hidden')" class="w-full bg-slate-200 dark:bg-slate-700 font-bold py-2.5 rounded-xl">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="expense-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-md w-full p-5 space-y-4 text-xs font-bold">
+            <div><label class="block mb-1">البيان (اسم المصروف):</label><input type="text" id="exp-title" class="w-full border rounded-lg p-2.5 bg-white dark:bg-slate-900" placeholder="مثال: فاتورة كهرباء..."></div>
+            <div><label class="block mb-1">المبلغ (ل.ل):</label><input type="number" id="exp-amount" class="w-full border rounded-lg p-2.5 bg-white dark:bg-slate-900"></div>
+            <div class="flex gap-2 pt-2">
+                <button onclick="saveExpenseItem()" class="w-full bg-amber-600 text-white font-bold py-2.5 rounded-xl">حفظ المصروف</button>
+                <button onclick="document.getElementById('expense-modal').classList.add('hidden')" class="w-full bg-slate-200 dark:bg-slate-700 font-bold py-2.5 rounded-xl">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- حاويات الطباعة الحرارية المفصولة تماماً -->
+    <div id="printable-receipt" style="display:none;"></div>
+    <div id="printable-report" style="display:none;"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>

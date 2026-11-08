@@ -1,0 +1,6 @@
+{
+  "name": "ملك الصفيحة زكرياعروب - سيستم المطعم والكاشير",
+  "description": "منظومة متطورة لإدارة الطلبات، نقاط البيع الكاشير، الطاولات، الجرد، والطلب الأونلاين مع دعم SQL وقابلية الاستضافة على هوستينجر.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
