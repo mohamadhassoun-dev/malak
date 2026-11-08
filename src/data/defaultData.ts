@@ -1,10 +1,15 @@
 import { CompanyProfile, InventoryItem, MenuItem, AppUser, CustomerAccount } from '../types';
+import heroImg from '../assets/images/bakery_hero_fire_oven_1794146705417.jpg';
+import meatImg from '../assets/images/sfiha_meat_fresh_1794146701983.jpg';
+import cheeseImg from '../assets/images/sfiha_cheese_golden_1794146702566.jpg';
+import sujukImg from '../assets/images/sfiha_sujuk_spicy_1794146703291.jpg';
+import hummusImg from '../assets/images/lebanese_hummus_mezze_1794146702748.jpg';
 
-export const HERO_IMAGE = '/src/assets/images/bakery_hero_fire_oven_1794146705417.jpg';
-export const SFIHA_MEAT_IMG = '/src/assets/images/sfiha_meat_fresh_1794146701983.jpg';
-export const SFIHA_CHEESE_IMG = '/src/assets/images/sfiha_cheese_golden_1794146702566.jpg';
-export const SFIHA_SUJUK_IMG = '/src/assets/images/sfiha_sujuk_spicy_1794146703291.jpg';
-export const HUMMUS_IMG = '/src/assets/images/lebanese_hummus_mezze_1794146702748.jpg';
+export const HERO_IMAGE = heroImg;
+export const SFIHA_MEAT_IMG = meatImg;
+export const SFIHA_CHEESE_IMG = cheeseImg;
+export const SFIHA_SUJUK_IMG = sujukImg;
+export const HUMMUS_IMG = hummusImg;
 
 export const DEFAULT_LOGO = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240"><circle cx="120" cy="120" r="114" fill="%23881337" stroke="%23f59e0b" stroke-width="8"/><circle cx="120" cy="120" r="95" fill="%23be123c"/><path d="M120 45 L132 80 L168 80 L140 102 L150 138 L120 118 L90 138 L100 102 L72 80 L108 80 Z" fill="%23f59e0b"/><text x="50%" y="68%" font-family="system-ui, Tajawal" font-size="20" font-weight="900" text-anchor="middle" fill="%23ffffff">ملك الصفيحة</text><text x="50%" y="82%" font-family="system-ui, Tajawal" font-size="13" font-weight="700" text-anchor="middle" fill="%23fcd34d">زكرياعروب - 1998</text></svg>';
 

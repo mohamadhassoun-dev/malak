@@ -10,7 +10,8 @@ import {
   FileCode,
   ShieldCheck,
   HelpCircle,
-  FileText
+  FileText,
+  AlertCircle
 } from 'lucide-react';
 import { AppState } from '../types';
 import { generateHostingerSQL, generateHostingerHtaccess, downloadFile } from '../services/sqlGenerator';
@@ -30,7 +31,7 @@ export const SqlExportModal: React.FC<SqlExportModalProps> = ({
 }) => {
   const [copiedSql, setCopiedSql] = useState<boolean>(false);
   const [copiedHtaccess, setCopiedHtaccess] = useState<boolean>(false);
-  const [activeTab, setActiveTab] = useState<'sql' | 'htaccess' | 'json' | 'guide'>('sql');
+  const [activeTab, setActiveTab] = useState<'dist' | 'sql' | 'htaccess' | 'json' | 'guide'>('dist');
   const [statusMessage, setStatusMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
   if (!isOpen) return null;
@@ -59,6 +60,19 @@ export const SqlExportModal: React.FC<SqlExportModalProps> = ({
     navigator.clipboard.writeText(htaccessContent);
     setCopiedHtaccess(true);
     setTimeout(() => setCopiedHtaccess(false), 2000);
+  };
+
+  const handleDownloadDistZip = () => {
+    const link = document.createElement('a');
+    link.href = '/dist.zip';
+    link.download = 'dist.zip';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setStatusMessage({
+      text: 'جاري تحميل ملف dist.zip! ارفعه إلى مجلد public_html في هوستينجر ثم اضغط كليك يمين واختر Extract.',
+      type: 'success'
+    });
   };
 
   const handleDownloadJsonBackup = () => {
@@ -130,6 +144,17 @@ export const SqlExportModal: React.FC<SqlExportModalProps> = ({
         {/* Tab buttons */}
         <div className="flex items-center gap-2 overflow-x-auto pb-1 border-b border-stone-100 dark:border-stone-800 text-xs font-bold shrink-0">
           <button
+            onClick={() => setActiveTab('dist')}
+            className={`px-3.5 py-2 rounded-xl transition cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+              activeTab === 'dist'
+                ? 'bg-amber-500 text-stone-950 font-black shadow-xs'
+                : 'bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white'
+            }`}
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>حزمة هوستينجر الجاهزة (dist.zip)</span>
+          </button>
+          <button
             onClick={() => setActiveTab('sql')}
             className={`px-3.5 py-2 rounded-xl transition cursor-pointer whitespace-nowrap ${
               activeTab === 'sql'
@@ -170,6 +195,65 @@ export const SqlExportModal: React.FC<SqlExportModalProps> = ({
             دليل استضافة Hostinger الكامل
           </button>
         </div>
+
+        {/* Tab 0: Ready Production Build (dist.zip) - Solves Blank Page */}
+        {activeTab === 'dist' && (
+          <div className="space-y-4 flex-grow overflow-y-auto text-xs">
+            <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700 text-amber-950 dark:text-amber-200 leading-relaxed font-bold space-y-2">
+              <div className="flex items-center gap-2 text-sm font-black text-rose-700 dark:text-rose-400">
+                <AlertCircle className="w-5 h-5 shrink-0" />
+                <span>سبب ظهور الصفحة البيضاء (Blank Page) وكيفية حلها نهائياً:</span>
+              </div>
+              <p className="text-[11px] leading-relaxed text-stone-700 dark:text-stone-300">
+                الصفحة البيضاء ظهرت لأنك قمت برفع ملفات المشروع المصدرية الخام (مجلد <code className="bg-white dark:bg-stone-800 px-1 py-0.5 rounded font-mono">src</code> وملف <code className="bg-white dark:bg-stone-800 px-1 py-0.5 rounded font-mono">main.tsx</code>) داخل <code className="bg-white dark:bg-stone-800 px-1 py-0.5 rounded font-mono">public_html</code>. متصفحات الويب لا تستطيع قراءة ملفات TypeScript مباشرة بدون بناء وترجمة (Build).
+              </p>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-700 text-emerald-900 dark:text-emerald-200 space-y-3">
+              <div className="font-black text-sm flex items-center gap-2">
+                <Check className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                <span>الحل الفوري (3 خطوات سريعة):</span>
+              </div>
+              <ol className="list-decimal list-inside space-y-2 text-stone-800 dark:text-stone-200 font-bold">
+                <li>
+                  اضغط على الزر الذهبي أدناه لتحميل ملف <code className="bg-white dark:bg-stone-800 px-1.5 py-0.5 rounded font-mono">dist.zip</code> المترجم والجاهز بالكامل.
+                </li>
+                <li>
+                  في لوحة هوستينجر File Manager: ادخل إلى <code className="bg-white dark:bg-stone-800 px-1.5 py-0.5 rounded font-mono">public_html</code>، احذف الملفات الحالية وارفع ملف <code className="bg-white dark:bg-stone-800 px-1.5 py-0.5 rounded font-mono">dist.zip</code>.
+                </li>
+                <li>
+                  اضغط كليك يمين على <code className="bg-white dark:bg-stone-800 px-1.5 py-0.5 rounded font-mono">dist.zip</code> واضغط <strong>Extract (استخراج)</strong> لتفرغ المحتويات داخل <code className="bg-white dark:bg-stone-800 px-1.5 py-0.5 rounded font-mono">public_html</code>.
+                </li>
+              </ol>
+
+              <div className="pt-2 flex flex-wrap gap-2.5">
+                <button
+                  onClick={handleDownloadDistZip}
+                  className="px-5 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-stone-950 font-black text-sm shadow-md transition flex items-center gap-2 cursor-pointer active:scale-95"
+                >
+                  <Download className="w-5 h-5" />
+                  <span>تحميل حزمة الإنتاج الجاهزة (dist.zip) فوراً</span>
+                </button>
+
+                <a
+                  href="/dist.zip"
+                  download="dist.zip"
+                  className="px-4 py-3 rounded-xl bg-white dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-700 border border-stone-300 dark:border-stone-700 text-stone-800 dark:text-stone-200 font-bold text-xs transition flex items-center gap-1.5 cursor-pointer"
+                >
+                  رابط تحميل بديل مباشر
+                </a>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-stone-100 dark:bg-stone-800 text-[11px] font-mono text-stone-600 dark:text-stone-400">
+              📁 محتويات حزمة dist.zip:
+              <br />• index.html (مترجم للإنتاج ومرتبط بحزم assets)
+              <br />• assets/ (كافة أكواد جافاسكريبت وستايلات CSS والصور مضغوطة ومترجمة)
+              <br />• .htaccess (توجيهات Apache لمنع أخطاء 404 وتفعيل ضغط GZIP)
+              <br />• database.sql (نسخة قاعدة بيانات SQL الجاهزة)
+            </div>
+          </div>
+        )}
 
         {/* Tab 1: SQL Export */}
         {activeTab === 'sql' && (
