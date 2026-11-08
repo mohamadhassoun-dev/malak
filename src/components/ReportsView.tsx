@@ -68,7 +68,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
 
         <button
           onClick={onPrintDailyReport}
-          className="px-4 py-2.5 rounded-xl bg-[#881337] hover:bg-[#700f2d] text-white text-xs font-bold shadow transition flex items-center gap-2 self-start sm:self-auto"
+          className="px-4 py-2.5 rounded-xl dynamic-btn text-white text-xs font-bold shadow transition flex items-center gap-2 self-start sm:self-auto cursor-pointer"
         >
           <Printer className="w-4 h-4" />
           <span>طباعة كشف الحساب اليومي (Z-Report)</span>
@@ -167,7 +167,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
                         <td className="py-3 text-center tabular-nums font-black text-rose-600 dark:text-rose-400">
                           {data.qty} قطعة
                         </td>
-                        <td className="py-3 font-black text-[#881337] dark:text-rose-400 tabular-nums">
+                        <td className="py-3 font-black dynamic-text tabular-nums">
                           {formatLbp(data.total)}
                         </td>
                         <td className="py-3 text-center">
@@ -196,7 +196,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
                 <div className="font-bold text-stone-900 dark:text-stone-100">طاولات الصالة</div>
                 <div className="text-[11px] text-stone-400">خدمة داخل المطعم</div>
               </div>
-              <div className="text-base font-black text-[#881337] dark:text-rose-400 tabular-nums">
+              <div className="text-base font-black dynamic-text tabular-nums">
                 {typeCounts.hall} طلب
               </div>
             </div>
@@ -250,7 +250,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
                     <td className="py-2.5 font-mono font-bold text-stone-800 dark:text-stone-200">{c.date}</td>
                     <td className="py-2.5 font-bold text-emerald-600 tabular-nums">{formatLbp(c.totalSalesLbp)}</td>
                     <td className="py-2.5 font-bold text-rose-600 tabular-nums">{formatLbp(c.totalExpensesLbp)}</td>
-                    <td className="py-2.5 font-black text-[#881337] dark:text-rose-400 tabular-nums">{formatLbp(c.netCashLbp)}</td>
+                    <td className="py-2.5 font-black dynamic-text tabular-nums">{formatLbp(c.netCashLbp)}</td>
                     <td className="py-2.5 text-center font-bold">{c.ordersCount}</td>
                     <td className="py-2.5 text-center font-bold">{c.breadSold}</td>
                     <td className="py-2.5 text-stone-500">{c.closedBy}</td>

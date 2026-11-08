@@ -147,30 +147,30 @@ export const POSView: React.FC<POSViewProps> = ({
         <div className="flex items-center gap-2 bg-stone-100 dark:bg-stone-800 p-1.5 rounded-xl text-xs font-bold">
           <button
             onClick={() => onSetOrderType('hall')}
-            className={`px-4 py-2 rounded-lg transition-all ${
+            className={`px-4 py-2 rounded-lg transition-all cursor-pointer ${
               orderType === 'hall'
-                ? 'bg-[#881337] text-white shadow'
-                : 'text-stone-600 dark:text-stone-300 hover:text-stone-900'
+                ? 'dynamic-bg text-white shadow'
+                : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-200/60 dark:hover:bg-stone-700/60'
             }`}
           >
             صالة (طاولة)
           </button>
           <button
             onClick={() => onSetOrderType('takeaway')}
-            className={`px-4 py-2 rounded-lg transition-all ${
+            className={`px-4 py-2 rounded-lg transition-all cursor-pointer ${
               orderType === 'takeaway'
-                ? 'bg-[#881337] text-white shadow'
-                : 'text-stone-600 dark:text-stone-300 hover:text-stone-900'
+                ? 'dynamic-bg text-white shadow'
+                : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-200/60 dark:hover:bg-stone-700/60'
             }`}
           >
             تيك أواي (سفري)
           </button>
           <button
             onClick={() => onSetOrderType('delivery')}
-            className={`px-4 py-2 rounded-lg transition-all ${
+            className={`px-4 py-2 rounded-lg transition-all cursor-pointer ${
               orderType === 'delivery'
-                ? 'bg-[#881337] text-white shadow'
-                : 'text-stone-600 dark:text-stone-300 hover:text-stone-900'
+                ? 'dynamic-bg text-white shadow'
+                : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-200/60 dark:hover:bg-stone-700/60'
             }`}
           >
             دليفري (توصيل)
@@ -255,10 +255,10 @@ export const POSView: React.FC<POSViewProps> = ({
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
-                  className={`px-3 py-1.5 text-xs font-bold rounded-xl whitespace-nowrap transition ${
+                  className={`px-3 py-1.5 text-xs font-bold rounded-xl whitespace-nowrap transition cursor-pointer ${
                     selectedCategory === cat
-                      ? 'bg-[#881337] text-white shadow-sm'
-                      : 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300'
+                      ? 'dynamic-bg text-white shadow-sm'
+                      : 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white'
                   }`}
                 >
                   {cat === 'all' ? 'الكل' : cat}
@@ -287,7 +287,7 @@ export const POSView: React.FC<POSViewProps> = ({
                   playChime('add');
                   onAddToCart(item);
                 }}
-                className="p-3 bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-800 hover:border-[#881337] dark:hover:border-rose-600 shadow-sm text-right flex flex-col justify-between transition-all group active:scale-95"
+                className="p-3 bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-800 hover:border-[var(--primary-color)] dark:hover:border-amber-400 shadow-sm text-right flex flex-col justify-between transition-all group active:scale-95 cursor-pointer"
               >
                 <div className="aspect-[4/3] rounded-xl overflow-hidden bg-stone-100 dark:bg-stone-800 mb-2 relative">
                   <img
@@ -306,7 +306,7 @@ export const POSView: React.FC<POSViewProps> = ({
                   <h4 className="font-bold text-xs text-stone-900 dark:text-stone-100 line-clamp-1 mb-1">
                     {item.name}
                   </h4>
-                  <div className="text-xs font-black text-[#881337] dark:text-rose-400 tabular-nums">
+                  <div className="text-xs font-black dynamic-text tabular-nums">
                     {formatLbp(item.price)}
                   </div>
                 </div>
@@ -375,13 +375,13 @@ export const POSView: React.FC<POSViewProps> = ({
                             playChime('add');
                             onUpdateCartQty(item.id, 1);
                           }}
-                          className="w-6 h-6 rounded bg-[#be123c] font-black text-white flex items-center justify-center"
+                          className="w-6 h-6 rounded dynamic-btn font-black flex items-center justify-center cursor-pointer"
                         >
                           +
                         </button>
                         <button
                           onClick={() => onRemoveCartItem(item.id)}
-                          className="p-1 text-stone-400 hover:text-rose-500 mr-1"
+                          className="p-1 text-stone-400 hover:text-rose-500 mr-1 cursor-pointer"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -401,7 +401,7 @@ export const POSView: React.FC<POSViewProps> = ({
                     {formatLbp(totalLbp)}
                   </span>
                 </div>
-                <div className="flex items-center justify-between text-base font-black text-[#881337] dark:text-rose-400">
+                <div className="flex items-center justify-between text-base font-black dynamic-text">
                   <span>المجموع النهائي:</span>
                   <span className="tabular-nums text-lg">{formatLbp(totalLbp)}</span>
                 </div>
@@ -417,17 +417,17 @@ export const POSView: React.FC<POSViewProps> = ({
               <div className="space-y-1.5">
                 <label className="block text-[11px] font-bold text-stone-500">طريقة الدفع:</label>
                 <div className="grid grid-cols-3 gap-1 text-[11px] font-bold">
-                  {(['cash_lbp', 'cash_usd', 'card'] as PaymentMethod[]).map(pm => (
+                  {(['cash_lbp', 'cash_usd', 'whish_money'] as PaymentMethod[]).map(pm => (
                     <button
                       key={pm}
                       onClick={() => setPaymentMethod(pm)}
-                      className={`py-1.5 rounded-lg border text-center transition ${
+                      className={`py-1.5 rounded-lg border text-center transition cursor-pointer ${
                         paymentMethod === pm
-                          ? 'bg-[#881337] text-white border-[#881337]'
-                          : 'bg-stone-50 dark:bg-stone-800 text-stone-700 dark:text-stone-300 border-stone-200 dark:border-stone-700'
+                          ? 'dynamic-bg text-white dynamic-border'
+                          : 'bg-stone-50 dark:bg-stone-800 text-stone-700 dark:text-stone-300 border-stone-200 dark:border-stone-700 hover:text-stone-900 dark:hover:text-white'
                       }`}
                     >
-                      {pm === 'cash_lbp' ? 'كاش ليرة' : pm === 'cash_usd' ? 'كاش دولار' : 'بطاقة'}
+                      {pm === 'cash_lbp' ? 'كاش ليرة' : pm === 'cash_usd' ? 'كاش دولار' : 'تحويل Whish'}
                     </button>
                   ))}
                 </div>
@@ -442,7 +442,7 @@ export const POSView: React.FC<POSViewProps> = ({
                     placeholder="0"
                     value={receivedLbp}
                     onChange={(e) => setReceivedLbp(e.target.value)}
-                    className="w-full p-1.5 rounded-lg border bg-white dark:bg-stone-900 text-xs font-black tabular-nums"
+                    className="w-full p-1.5 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-xs font-black tabular-nums"
                   />
                 </div>
                 <div>
@@ -452,7 +452,7 @@ export const POSView: React.FC<POSViewProps> = ({
                     placeholder="0"
                     value={receivedUsd}
                     onChange={(e) => setReceivedUsd(e.target.value)}
-                    className="w-full p-1.5 rounded-lg border bg-white dark:bg-stone-900 text-xs font-black tabular-nums"
+                    className="w-full p-1.5 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-xs font-black tabular-nums"
                   />
                 </div>
                 {changeLbp > 0 && (
@@ -468,7 +468,7 @@ export const POSView: React.FC<POSViewProps> = ({
                 <button
                   disabled={!cart.length}
                   onClick={handleCheckoutClick}
-                  className="w-full py-3 px-4 rounded-xl bg-[#be123c] hover:bg-[#9f1239] text-white font-black text-xs shadow-md transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full py-3 px-4 rounded-xl dynamic-btn font-black text-xs shadow-md transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer active:scale-95"
                 >
                   <Printer className="w-4 h-4" />
                   <span>محاسبة وطباعة الإيصال الحراري</span>
@@ -477,7 +477,7 @@ export const POSView: React.FC<POSViewProps> = ({
                 <button
                   disabled={!cart.length}
                   onClick={handleWhatsAppSend}
-                  className="w-full py-2.5 px-4 rounded-xl bg-[#25D366] hover:bg-[#20ba59] text-white font-black text-xs shadow transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full py-2.5 px-4 rounded-xl bg-[#25D366] hover:bg-[#20ba59] text-white font-black text-xs shadow transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   <MessageCircle className="w-4 h-4" />
                   <span>محاسبة وإرسال عبر الواتساب</span>

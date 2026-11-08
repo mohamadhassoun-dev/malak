@@ -8,13 +8,15 @@ import {
   MenuItem,
   OrderRecord,
   OrderType,
-  AppUser
+  AppUser,
+  CustomerAccount
 } from '../types';
 import {
   DEFAULT_COMPANY,
   DEFAULT_INVENTORY,
   DEFAULT_MENU,
-  DEFAULT_USERS
+  DEFAULT_USERS,
+  DEFAULT_CUSTOMERS
 } from '../data/defaultData';
 
 const STORAGE_KEY = 'malak_sfiha_pos_v2';
@@ -44,7 +46,9 @@ export function loadInitialState(): AppState {
         company: { ...DEFAULT_COMPANY, ...(parsed.company || {}) },
         closings: parsed.closings || [],
         users: DEFAULT_USERS,
-        activeUser: parsed.activeUser?.role === 'admin' ? parsed.activeUser : DEFAULT_USERS[1]
+        activeUser: parsed.activeUser?.role === 'admin' ? parsed.activeUser : DEFAULT_USERS[1],
+        customers: parsed.customers && parsed.customers.length ? parsed.customers : DEFAULT_CUSTOMERS,
+        currentCustomer: parsed.currentCustomer || null
       };
     }
   } catch (err) {
@@ -99,7 +103,9 @@ function createDefaultState(): AppState {
     company: DEFAULT_COMPANY,
     closings: [],
     users: DEFAULT_USERS,
-    activeUser: DEFAULT_USERS[1] // Customer by default
+    activeUser: DEFAULT_USERS[1], // Customer by default
+    customers: DEFAULT_CUSTOMERS,
+    currentCustomer: null
   };
 }
 

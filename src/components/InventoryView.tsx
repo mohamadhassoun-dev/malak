@@ -9,7 +9,9 @@ import {
   Receipt,
   Wallet,
   Check,
-  Wheat
+  Wheat,
+  X,
+  AlertTriangle
 } from 'lucide-react';
 import { ExpenseRecord, InventoryItem } from '../types';
 import { formatLbp } from '../services/storageService';
@@ -36,17 +38,23 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
   // Modals state
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
   const [editQtyValue, setEditQtyValue] = useState<string>('');
+  const [stockError, setStockError] = useState<string | null>(null);
 
   const [showAddInvModal, setShowAddInvModal] = useState<boolean>(false);
   const [newInvName, setNewInvName] = useState<string>('');
   const [newInvQty, setNewInvQty] = useState<string>('100');
   const [newInvUnit, setNewInvUnit] = useState<string>('رغيف');
   const [newInvMin, setNewInvMin] = useState<string>('20');
+  const [invError, setInvError] = useState<string | null>(null);
 
   const [showAddExpModal, setShowAddExpModal] = useState<boolean>(false);
   const [newExpTitle, setNewExpTitle] = useState<string>('');
   const [newExpAmount, setNewExpAmount] = useState<string>('');
   const [newExpCat, setNewExpCat] = useState<ExpenseRecord['category']>('supplies');
+  const [expError, setExpError] = useState<string | null>(null);
+
+  // In-app deletion confirm for expense
+  const [expenseToDelete, setExpenseToDelete] = useState<ExpenseRecord | null>(null);
 
   // Bread item (special emphasis)
   const breadItem = inventory.find(i => i.name.includes('خبز') || i.name.includes('رغيف')) || inventory[0];
@@ -54,20 +62,27 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
   const openStockModal = (item: InventoryItem) => {
     setEditingItem(item);
     setEditQtyValue(item.qty.toString());
+    setStockError(null);
   };
 
   const handleSaveStock = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingItem) return;
     const val = parseFloat(editQtyValue);
-    if (isNaN(val) || val < 0) return alert('أدخل كمية صحيحة');
+    if (isNaN(val) || val < 0) {
+      setStockError('يرجى إدخال كمية صحيحة (صفر أو أكثر)');
+      return;
+    }
     onUpdateItemStock(editingItem.name, val);
     setEditingItem(null);
   };
 
   const handleAddInvSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newInvName.trim()) return alert('أدخل اسم المادة');
+    if (!newInvName.trim()) {
+      setInvError('يرجى كتابة اسم المادة');
+      return;
+    }
     const qty = parseFloat(newInvQty) || 0;
     const min = parseFloat(newInvMin) || 10;
     onAddInventoryItem({
@@ -83,9 +98,15 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
 
   const handleAddExpSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newExpTitle.trim()) return alert('أدخل بيان المصروف');
+    if (!newExpTitle.trim()) {
+      setExpError('يرجى إدخال بيان المصروف');
+      return;
+    }
     const amt = parseFloat(newExpAmount);
-    if (isNaN(amt) || amt <= 0) return alert('أدخل مبلغاً صحيحاً');
+    if (isNaN(amt) || amt <= 0) {
+      setExpError('يرجى إدخال مبلغ صحيح أكبر من صفر');
+      return;
+    }
     onAddExpense({
       title: newExpTitle.trim(),
       amount: amt,
@@ -110,7 +131,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
             <h2 className="text-lg font-black text-stone-900 dark:text-stone-50">
               إدارة المستودع، مخزون الخبز، والمصاريف
             </h2>
-            <p className="text-xs text-stone-500">
+            <p className="text-xs text-stone-500 dark:text-stone-400">
               حساب الخبز الأسمر المباع آلياً، موازنة المواد، وسجل المصروفات النقدية
             </p>
           </div>
@@ -118,16 +139,22 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
 
         <div className="flex items-center gap-2 flex-wrap">
           <button
-            onClick={() => setShowAddInvModal(true)}
-            className="px-3.5 py-2 rounded-xl bg-[#881337] hover:bg-[#700f2d] text-white text-xs font-bold shadow-sm transition flex items-center gap-1.5"
+            onClick={() => {
+              setInvError(null);
+              setShowAddInvModal(true);
+            }}
+            className="px-3.5 py-2 rounded-xl dynamic-btn text-white text-xs font-bold shadow-sm transition flex items-center gap-1.5 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>إضافة مادة للمستودع</span>
           </button>
 
           <button
-            onClick={() => setShowAddExpModal(true)}
-            className="px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-sm transition flex items-center gap-1.5"
+            onClick={() => {
+              setExpError(null);
+              setShowAddExpModal(true);
+            }}
+            className="px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-sm transition flex items-center gap-1.5 cursor-pointer"
           >
             <Wallet className="w-4 h-4" />
             <span>تسجيل مصروف</span>
@@ -135,7 +162,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
 
           <button
             onClick={onEndBusinessDay}
-            className="px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-black shadow-sm transition flex items-center gap-1.5"
+            className="px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-black shadow-sm transition flex items-center gap-1.5 cursor-pointer"
             title="إنهاء يوم العمل وأرشفة المبيعات وتصفير الصندوق"
           >
             <CalendarCheck className="w-4 h-4" />
@@ -149,7 +176,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="bg-white dark:bg-stone-900 rounded-2xl p-5 border border-stone-200 dark:border-stone-800 shadow-sm">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold text-stone-500">الرصيد الافتتاحي للخبز</span>
+              <span className="text-xs font-bold text-stone-500 dark:text-stone-400">الرصيد الافتتاحي للخبز</span>
               <Wheat className="w-4 h-4 text-amber-500" />
             </div>
             <div className="text-3xl font-black text-stone-800 dark:text-stone-100 tabular-nums">
@@ -163,7 +190,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
               <span className="text-xs font-bold text-rose-600 dark:text-rose-400">إجمالي الخبز المباع</span>
               <span className="w-2 h-2 rounded-full bg-rose-500" />
             </div>
-            <div className="text-3xl font-black text-[#881337] dark:text-rose-400 tabular-nums">
+            <div className="text-3xl font-black dynamic-text tabular-nums">
               {breadItem.soldQty} <span className="text-xs text-stone-400 font-normal">رغيف</span>
             </div>
             <p className="text-[11px] text-stone-400 mt-1">يُخصم آلياً مع كل صفيحة تُباع</p>
@@ -186,7 +213,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
 
             <button
               onClick={() => openStockModal(breadItem)}
-              className="p-3 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 rounded-xl hover:bg-emerald-100 transition"
+              className="p-3 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 rounded-xl hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition cursor-pointer"
               title="تعديل رصيد الخبز المتبقي يدوياً"
             >
               <PenSquare className="w-5 h-5" />
@@ -209,7 +236,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
           <div className="overflow-x-auto">
             <table className="w-full text-xs text-right">
               <thead>
-                <tr className="border-b border-stone-200 dark:border-stone-800 text-stone-500 pb-2">
+                <tr className="border-b border-stone-200 dark:border-stone-800 text-stone-500 dark:text-stone-400 pb-2">
                   <th className="py-2.5 font-bold">المادة</th>
                   <th className="py-2.5 font-bold text-center">الرصيد المتبقي</th>
                   <th className="py-2.5 font-bold text-center">المباع/المستهلك</th>
@@ -228,13 +255,13 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
                     <td className="py-3 text-center tabular-nums font-black text-emerald-600 dark:text-emerald-400">
                       {item.qty} {item.unit}
                     </td>
-                    <td className="py-3 text-center tabular-nums font-bold text-stone-500">
+                    <td className="py-3 text-center tabular-nums font-bold text-stone-500 dark:text-stone-400">
                       {item.soldQty} {item.unit}
                     </td>
                     <td className="py-3 text-center">
                       <button
                         onClick={() => openStockModal(item)}
-                        className="p-1.5 rounded-lg bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 text-stone-600 dark:text-stone-300 transition"
+                        className="p-1.5 rounded-lg bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-600 dark:text-stone-300 transition cursor-pointer"
                         title="تعديل الكمية"
                       >
                         <PenSquare className="w-3.5 h-3.5" />
@@ -258,7 +285,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
             </div>
             <div className="text-right">
               <span className="text-xs text-stone-400">المجموع: </span>
-              <span className="font-black text-[#881337] dark:text-rose-400 tabular-nums text-sm">
+              <span className="font-black dynamic-text tabular-nums text-sm">
                 {formatLbp(totalExpenses)}
               </span>
             </div>
@@ -266,13 +293,13 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
 
           <div className="overflow-x-auto max-h-80 overflow-y-auto">
             {expenses.length === 0 ? (
-              <div className="text-center py-12 text-stone-400 text-xs font-bold">
+              <div className="text-center py-12 text-stone-400 dark:text-stone-500 text-xs font-bold">
                 لا توجد مصاريف مسجلة اليوم
               </div>
             ) : (
               <table className="w-full text-xs text-right">
                 <thead>
-                  <tr className="border-b border-stone-200 dark:border-stone-800 text-stone-500 pb-2">
+                  <tr className="border-b border-stone-200 dark:border-stone-800 text-stone-500 dark:text-stone-400 pb-2">
                     <th className="py-2.5 font-bold">البيان</th>
                     <th className="py-2.5 font-bold">المبلغ</th>
                     <th className="py-2.5 font-bold text-center">التاريخ</th>
@@ -293,12 +320,8 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
                       </td>
                       <td className="py-3 text-center">
                         <button
-                          onClick={() => {
-                            if (confirm(`حذف مصروف "${exp.title}"؟`)) {
-                              onDeleteExpense(exp.id);
-                            }
-                          }}
-                          className="p-1.5 rounded-lg text-stone-400 hover:text-rose-500 transition"
+                          onClick={() => setExpenseToDelete(exp)}
+                          className="p-1.5 rounded-lg text-stone-400 hover:text-rose-500 transition cursor-pointer"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -316,13 +339,19 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
       {editingItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-950/60 backdrop-blur-xs">
           <div className="bg-white dark:bg-stone-900 rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-stone-200 dark:border-stone-800 text-right space-y-4">
-            <h3 className="font-black text-base text-stone-900 dark:text-stone-50 border-b pb-2">
+            <h3 className="font-black text-base text-stone-900 dark:text-stone-50 border-b border-stone-200 dark:border-stone-800 pb-2">
               تعديل رصيد المستودع: {editingItem.name}
             </h3>
 
+            {stockError && (
+              <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950 text-rose-700 dark:text-rose-300 text-xs font-bold">
+                {stockError}
+              </div>
+            )}
+
             <form onSubmit={handleSaveStock} className="space-y-4 text-xs font-bold">
               <div>
-                <label className="block text-stone-500 mb-1">
+                <label className="block text-stone-500 dark:text-stone-400 mb-1">
                   الكمية الحالية المتوفرة بالمستودع ({editingItem.unit}):
                 </label>
                 <input
@@ -330,21 +359,21 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
                   value={editQtyValue}
                   onChange={(e) => setEditQtyValue(e.target.value)}
                   autoFocus
-                  className="w-full p-3 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-center font-black text-lg"
+                  className="w-full p-3 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-900 dark:text-stone-100 text-center font-black text-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]"
                 />
               </div>
 
               <div className="flex gap-2 pt-2">
                 <button
                   type="submit"
-                  className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+                  className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold cursor-pointer"
                 >
                   حفظ وتحديث الرصيد
                 </button>
                 <button
                   type="button"
                   onClick={() => setEditingItem(null)}
-                  className="w-full py-2.5 rounded-xl bg-stone-200 dark:bg-stone-800 text-stone-700 dark:text-stone-300 font-bold"
+                  className="w-full py-2.5 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-stone-300 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 font-bold cursor-pointer"
                 >
                   إلغاء
                 </button>
@@ -358,65 +387,71 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
       {showAddInvModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-950/60 backdrop-blur-xs">
           <div className="bg-white dark:bg-stone-900 rounded-2xl max-w-md w-full p-5 shadow-2xl border border-stone-200 dark:border-stone-800 text-right space-y-4">
-            <h3 className="font-black text-base text-stone-900 dark:text-stone-50 border-b pb-2">
+            <h3 className="font-black text-base text-stone-900 dark:text-stone-50 border-b border-stone-200 dark:border-stone-800 pb-2">
               إضافة مادة خام جديدة للمستودع
             </h3>
 
+            {invError && (
+              <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950 text-rose-700 dark:text-rose-300 text-xs font-bold">
+                {invError}
+              </div>
+            )}
+
             <form onSubmit={handleAddInvSubmit} className="space-y-3 text-xs font-bold">
               <div>
-                <label className="block text-stone-500 mb-1">اسم المادة:</label>
+                <label className="block text-stone-500 dark:text-stone-400 mb-1">اسم المادة:</label>
                 <input
                   type="text"
                   placeholder="مثال: طماطم طازجة، بصل، بهار حلو..."
                   value={newInvName}
                   onChange={(e) => setNewInvName(e.target.value)}
-                  className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800"
+                  className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-900 dark:text-stone-100"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-stone-500 mb-1">الكمية الافتتاحية:</label>
+                  <label className="block text-stone-500 dark:text-stone-400 mb-1">الكمية الافتتاحية:</label>
                   <input
                     type="number"
                     value={newInvQty}
                     onChange={(e) => setNewInvQty(e.target.value)}
-                    className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 font-bold"
+                    className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-900 dark:text-stone-100 font-bold"
                   />
                 </div>
                 <div>
-                  <label className="block text-stone-500 mb-1">الوحدة:</label>
+                  <label className="block text-stone-500 dark:text-stone-400 mb-1">الوحدة:</label>
                   <input
                     type="text"
                     value={newInvUnit}
                     onChange={(e) => setNewInvUnit(e.target.value)}
                     placeholder="رغيف / كغ / لتر"
-                    className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 font-bold"
+                    className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-900 dark:text-stone-100 font-bold"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-stone-500 mb-1">حد الإنذار بنقص الكمية:</label>
+                <label className="block text-stone-500 dark:text-stone-400 mb-1">حد الإنذار بنقص الكمية:</label>
                 <input
                   type="number"
                   value={newInvMin}
                   onChange={(e) => setNewInvMin(e.target.value)}
-                  className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 font-bold"
+                  className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-900 dark:text-stone-100 font-bold"
                 />
               </div>
 
               <div className="flex gap-2 pt-3">
                 <button
                   type="submit"
-                  className="w-full py-2.5 rounded-xl bg-[#881337] text-white font-bold"
+                  className="w-full py-2.5 rounded-xl dynamic-btn text-white font-bold cursor-pointer"
                 >
                   حفظ المادة
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowAddInvModal(false)}
-                  className="w-full py-2.5 rounded-xl bg-stone-200 dark:bg-stone-800 text-stone-700 dark:text-stone-300 font-bold"
+                  className="w-full py-2.5 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-stone-300 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 font-bold cursor-pointer"
                 >
                   إلغاء
                 </button>
@@ -430,39 +465,45 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
       {showAddExpModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-950/60 backdrop-blur-xs">
           <div className="bg-white dark:bg-stone-900 rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-stone-200 dark:border-stone-800 text-right space-y-4">
-            <h3 className="font-black text-base text-stone-900 dark:text-stone-50 border-b pb-2">
+            <h3 className="font-black text-base text-stone-900 dark:text-stone-50 border-b border-stone-200 dark:border-stone-800 pb-2">
               تسجيل مصروف نقدي من الصندوق
             </h3>
 
+            {expError && (
+              <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950 text-rose-700 dark:text-rose-300 text-xs font-bold">
+                {expError}
+              </div>
+            )}
+
             <form onSubmit={handleAddExpSubmit} className="space-y-3 text-xs font-bold">
               <div>
-                <label className="block text-stone-500 mb-1">البيان (اسم المصروف):</label>
+                <label className="block text-stone-500 dark:text-stone-400 mb-1">البيان (اسم المصروف):</label>
                 <input
                   type="text"
                   placeholder="مثال: فاتورة كهرباء، شراء خضار، صيانة فرن..."
                   value={newExpTitle}
                   onChange={(e) => setNewExpTitle(e.target.value)}
-                  className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800"
+                  className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-900 dark:text-stone-100"
                 />
               </div>
 
               <div>
-                <label className="block text-stone-500 mb-1">المبلغ بالليرة اللبنانية (ل.ل):</label>
+                <label className="block text-stone-500 dark:text-stone-400 mb-1">المبلغ بالليرة اللبنانية (ل.ل):</label>
                 <input
                   type="number"
                   placeholder="مثال: 500000"
                   value={newExpAmount}
                   onChange={(e) => setNewExpAmount(e.target.value)}
-                  className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 font-black text-base"
+                  className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-900 dark:text-stone-100 font-black text-base"
                 />
               </div>
 
               <div>
-                <label className="block text-stone-500 mb-1">نوع المصروف:</label>
+                <label className="block text-stone-500 dark:text-stone-400 mb-1">نوع المصروف:</label>
                 <select
                   value={newExpCat}
                   onChange={(e) => setNewExpCat(e.target.value as ExpenseRecord['category'])}
-                  className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 font-bold"
+                  className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-900 dark:text-stone-100 font-bold"
                 >
                   <option value="supplies">مشتريات ومواد غذائية</option>
                   <option value="utilities">فواتير وكهرباء ومازوت</option>
@@ -475,19 +516,58 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
               <div className="flex gap-2 pt-3">
                 <button
                   type="submit"
-                  className="w-full py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold"
+                  className="w-full py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold cursor-pointer"
                 >
                   تسجيل وخصم من الصندوق
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowAddExpModal(false)}
-                  className="w-full py-2.5 rounded-xl bg-stone-200 dark:bg-stone-800 text-stone-700 dark:text-stone-300 font-bold"
+                  className="w-full py-2.5 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-stone-300 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 font-bold cursor-pointer"
                 >
                   إلغاء
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Expense Confirmation Modal */}
+      {expenseToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-950/70 backdrop-blur-xs">
+          <div className="bg-white dark:bg-stone-900 rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-stone-200 dark:border-stone-800 text-right space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="p-3 rounded-2xl bg-rose-100 dark:bg-rose-950 text-rose-600 dark:text-rose-400">
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="font-black text-base text-stone-900 dark:text-stone-50">
+                  حذف المصروف
+                </h3>
+                <p className="text-xs text-stone-500">{expenseToDelete.title}</p>
+              </div>
+            </div>
+            <p className="text-xs font-bold text-stone-600 dark:text-stone-300">
+              هل أنت متأكد من حذف هذا المصروف بمبلغ {formatLbp(expenseToDelete.amount)}؟
+            </p>
+            <div className="flex gap-2 pt-2">
+              <button
+                onClick={() => {
+                  onDeleteExpense(expenseToDelete.id);
+                  setExpenseToDelete(null);
+                }}
+                className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs transition cursor-pointer"
+              >
+                نعم، حذف المصروف
+              </button>
+              <button
+                onClick={() => setExpenseToDelete(null)}
+                className="py-2.5 px-4 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 font-bold text-xs cursor-pointer"
+              >
+                إلغاء
+              </button>
+            </div>
           </div>
         </div>
       )}

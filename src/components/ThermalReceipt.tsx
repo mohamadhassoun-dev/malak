@@ -16,20 +16,27 @@ interface ThermalReceiptProps {
 }
 
 export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({ order, company, reportData }) => {
+  const receiptLogoToUse = company.receiptLogo || company.logo;
+  const showLogo = company.showReceiptLogo !== false && Boolean(receiptLogoToUse);
+
   if (reportData) {
     return (
       <div id="printable-report" className="print-only">
         <div style={{ textAlign: 'center', marginBottom: '8px' }}>
-          {company.logo && (
+          {showLogo && (
             <img
-              src={company.logo}
+              src={receiptLogoToUse}
               alt="Logo"
-              style={{ width: '45px', height: '45px', margin: '0 auto 4px auto', borderRadius: '50%', objectFit: 'cover' }}
+              style={{ width: '50px', height: '50px', margin: '0 auto 4px auto', borderRadius: '50%', objectFit: 'cover' }}
             />
           )}
-          <div style={{ fontSize: '14px', fontWeight: 'bold' }}>{company.name}</div>
+          <div style={{ fontSize: '15px', fontWeight: 'bold' }}>{company.name}</div>
+          {company.subName && <div style={{ fontSize: '10px' }}>{company.subName}</div>}
           <div style={{ fontSize: '10px' }}>{company.city} - {company.address}</div>
-          <div style={{ fontSize: '10px' }}>هاتف: {company.phone}</div>
+          <div style={{ fontSize: '10px' }}>هاتف: {company.phone} | واتساب: {company.whatsappPhone}</div>
+          {company.receiptHeaderNote && (
+            <div style={{ fontSize: '9px', fontStyle: 'italic', margin: '2px 0' }}>{company.receiptHeaderNote}</div>
+          )}
           <div style={{ borderBottom: '1px dashed #000', margin: '6px 0' }}></div>
           <div style={{ fontSize: '12px', fontWeight: 'bold' }}>تقرير المبيعات والإغلاق اليومي (Z-Report)</div>
           <div style={{ fontSize: '10px' }}>التاريخ: {reportData.date}</div>
@@ -84,20 +91,23 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({ order, company, 
   return (
     <div id="printable-receipt" className="print-only">
       <div style={{ textAlign: 'center', marginBottom: '6px' }}>
-        {company.logo && (
+        {showLogo && (
           <img
-            src={company.logo}
+            src={receiptLogoToUse}
             alt="Logo"
-            style={{ width: '48px', height: '48px', margin: '0 auto 4px auto', borderRadius: '50%', objectFit: 'cover' }}
+            style={{ width: '52px', height: '52px', margin: '0 auto 4px auto', borderRadius: '50%', objectFit: 'cover' }}
           />
         )}
-        <div style={{ fontSize: '15px', fontWeight: 'bold' }}>{company.name}</div>
-        <div style={{ fontSize: '10px' }}>{company.subName}</div>
+        <div style={{ fontSize: '16px', fontWeight: 'bold' }}>{company.name}</div>
+        {company.subName && <div style={{ fontSize: '10px' }}>{company.subName}</div>}
         <div style={{ fontSize: '10px' }}>{company.city} - {company.address}</div>
         <div style={{ fontSize: '10px' }}>هاتف: {company.phone} | واتساب: {company.whatsappPhone}</div>
+        {company.receiptHeaderNote && (
+          <div style={{ fontSize: '9px', fontStyle: 'italic', margin: '2px 0' }}>{company.receiptHeaderNote}</div>
+        )}
         {company.taxNumber && <div style={{ fontSize: '9px' }}>الرقم المالي: {company.taxNumber}</div>}
         <div style={{ borderBottom: '1px dashed #000', margin: '6px 0' }}></div>
-        <div style={{ fontSize: '12px', fontWeight: 'bold' }}>فاتورة طلب: {order.id}</div>
+        <div style={{ fontSize: '13px', fontWeight: 'bold' }}>فاتورة طلب: {order.id}</div>
         <div style={{ fontSize: '10px' }}>النوع: {typeLabel}</div>
         <div style={{ fontSize: '9px' }}>الوقت: {order.createdAt}</div>
         {order.customerName && order.customerName !== 'عميل' && (
@@ -146,8 +156,8 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({ order, company, 
       </div>
 
       <div style={{ textAlign: 'center', marginTop: '10px', paddingTop: '6px', borderTop: '1px dashed #000', fontSize: '10px' }}>
-        <div>أهلاً وسهلاً بكم وشكراً لثقتكم</div>
-        <div style={{ fontSize: '8.5px', marginTop: '2px' }}>ملك الصفيحة زكرياعروب - تأسيس 1998</div>
+        <div>{company.receiptFooterNote || 'أهلاً وسهلاً بكم وشكراً لثقتكم'}</div>
+        <div style={{ fontSize: '8.5px', marginTop: '2px' }}>{company.name} - تأسيس {company.establishmentYear || '1998'}</div>
       </div>
     </div>
   );

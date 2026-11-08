@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Search,
   Plus,
@@ -18,7 +18,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { CartItem, CompanyProfile, MenuItem, OrderType } from '../types';
+import { CartItem, CompanyProfile, MenuItem, OrderType, CustomerAccount } from '../types';
 import { formatLbp, formatUsd, playChime } from '../services/storageService';
 import { HERO_IMAGE } from '../data/defaultData';
 
@@ -29,6 +29,9 @@ interface CustomerViewProps {
   orderType: OrderType;
   tableNumber: number;
   tablesCount: number;
+  currentCustomer: CustomerAccount | null;
+  onOpenCustomerAccount: () => void;
+  onOpenAuthModal: () => void;
   onAddToCart: (item: MenuItem, notes?: string) => void;
   onUpdateCartQty: (itemId: number, delta: number) => void;
   onClearCart: () => void;
@@ -47,6 +50,9 @@ export const CustomerView: React.FC<CustomerViewProps> = ({
   orderType,
   tableNumber,
   tablesCount,
+  currentCustomer,
+  onOpenCustomerAccount,
+  onOpenAuthModal,
   onAddToCart,
   onUpdateCartQty,
   onClearCart,
@@ -62,14 +68,22 @@ export const CustomerView: React.FC<CustomerViewProps> = ({
   const [noteModalItem, setNoteModalItem] = useState<MenuItem | null>(null);
   const [customNote, setCustomNote] = useState<string>('');
 
-  // Customer Checkout fields (Name & Phone are strictly required)
-  const [customerName, setCustomerName] = useState<string>('');
-  const [customerPhone, setCustomerPhone] = useState<string>('');
-  const [customerAddress, setCustomerAddress] = useState<string>('');
+  const [customerName, setCustomerName] = useState<string>(() => currentCustomer?.name || '');
+  const [customerPhone, setCustomerPhone] = useState<string>(() => currentCustomer?.phone || '');
+  const [customerAddress, setCustomerAddress] = useState<string>(() => currentCustomer?.address || '');
   const [orderNotes, setOrderNotes] = useState<string>('');
   const [orderSubmittedSuccess, setOrderSubmittedSuccess] = useState<boolean>(false);
   const [formErrors, setFormErrors] = useState<{ name?: string; phone?: string; address?: string }>({});
   const [touched, setTouched] = useState<{ name?: boolean; phone?: boolean; address?: boolean }>({});
+
+  // Sync inputs if customer logs in or profile changes
+  useEffect(() => {
+    if (currentCustomer) {
+      if (currentCustomer.name) setCustomerName(currentCustomer.name);
+      if (currentCustomer.phone) setCustomerPhone(currentCustomer.phone);
+      if (currentCustomer.address) setCustomerAddress(currentCustomer.address);
+    }
+  }, [currentCustomer]);
 
   // Extract categories
   const categories = useMemo(() => {
@@ -224,15 +238,36 @@ export const CustomerView: React.FC<CustomerViewProps> = ({
             <div className="flex flex-wrap items-center gap-3 text-xs">
               <a
                 href="#menu-section"
-                className="px-5 py-3 rounded-xl bg-[#be123c] hover:bg-[#9f1239] text-white font-black shadow-lg shadow-rose-900/30 transition-all flex items-center gap-2"
+                className="px-5 py-3 rounded-xl dynamic-btn font-black shadow-lg shadow-rose-900/30 transition-all flex items-center gap-2 cursor-pointer active:scale-95"
               >
                 <ShoppingBag className="w-4 h-4" />
                 <span>{company.heroCtaText || 'استعرض القائمة واطلب الآن'}</span>
               </a>
-              <div className="flex items-center gap-4 text-stone-300 font-bold bg-white/10 backdrop-blur-sm px-4 py-3 rounded-xl border border-white/10">
-                <span className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5 text-amber-400" /> {company.city} - {company.address}</span>
-                <span className="hidden sm:inline">·</span>
-                <span className="flex items-center gap-1.5"><Phone className="w-3.5 h-3.5 text-amber-400" /> {company.phone}</span>
+              <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-stone-200 font-bold bg-white/10 backdrop-blur-md px-4 py-2.5 rounded-xl border border-white/15">
+                <span className="flex items-center gap-1.5 text-stone-300">
+                  <MapPin className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  <span>{company.city} - {company.address}</span>
+                </span>
+                <span className="hidden sm:inline text-stone-500">·</span>
+                <a
+                  href={`tel:${company.phone.replace(/[^0-9+]/g, '')}`}
+                  className="flex items-center gap-1.5 hover:text-emerald-400 text-stone-200 transition cursor-pointer"
+                  title="اتصال هاتفي مباشر بالمطعم"
+                >
+                  <Phone className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  <span>{company.phone}</span>
+                </a>
+                <span className="hidden sm:inline text-stone-500">·</span>
+                <a
+                  href={`https://wa.me/${company.whatsappPhone.replace(/[^0-9]/g, '')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 hover:text-emerald-400 text-emerald-300 transition cursor-pointer"
+                  title="محادثة واتساب فورية"
+                >
+                  <MessageCircle className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <span>واتساب مباشر</span>
+                </a>
               </div>
             </div>
           </motion.div>
@@ -254,30 +289,30 @@ export const CustomerView: React.FC<CustomerViewProps> = ({
             <div className="grid grid-cols-3 gap-2 bg-stone-100 dark:bg-stone-800 p-1.5 rounded-xl text-xs font-bold">
               <button
                 onClick={() => onSetOrderType('hall')}
-                className={`py-2 px-3 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                className={`py-2 px-3 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                   orderType === 'hall'
-                    ? 'bg-[#881337] text-white shadow-sm'
-                    : 'text-stone-600 dark:text-stone-300 hover:text-stone-900'
+                    ? 'dynamic-bg text-white shadow-sm'
+                    : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-200/60 dark:hover:bg-stone-700/60'
                 }`}
               >
                 <span>داخل الصالة</span>
               </button>
               <button
                 onClick={() => onSetOrderType('takeaway')}
-                className={`py-2 px-3 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                className={`py-2 px-3 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                   orderType === 'takeaway'
-                    ? 'bg-[#881337] text-white shadow-sm'
-                    : 'text-stone-600 dark:text-stone-300 hover:text-stone-900'
+                    ? 'dynamic-bg text-white shadow-sm'
+                    : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-200/60 dark:hover:bg-stone-700/60'
                 }`}
               >
                 <span>سفري (تيك أواي)</span>
               </button>
               <button
                 onClick={() => onSetOrderType('delivery')}
-                className={`py-2 px-3 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                className={`py-2 px-3 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                   orderType === 'delivery'
-                    ? 'bg-[#881337] text-white shadow-sm'
-                    : 'text-stone-600 dark:text-stone-300 hover:text-stone-900'
+                    ? 'dynamic-bg text-white shadow-sm'
+                    : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-200/60 dark:hover:bg-stone-700/60'
                 }`}
               >
                 <span>دليفري (توصيل)</span>
@@ -300,10 +335,10 @@ export const CustomerView: React.FC<CustomerViewProps> = ({
                   <button
                     key={num}
                     onClick={() => onSetTableNumber(num)}
-                    className={`w-9 h-9 rounded-lg font-black text-xs transition flex items-center justify-center ${
+                    className={`w-9 h-9 rounded-lg font-black text-xs transition flex items-center justify-center cursor-pointer ${
                       tableNumber === num
                         ? 'bg-amber-500 text-stone-900 shadow'
-                        : 'bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-200'
+                        : 'bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700 hover:text-stone-900 dark:hover:text-white'
                     }`}
                   >
                     {num}
@@ -324,10 +359,10 @@ export const CustomerView: React.FC<CustomerViewProps> = ({
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
-                  className={`px-4 py-2 text-xs font-bold rounded-xl transition whitespace-nowrap ${
+                  className={`px-4 py-2 text-xs font-bold rounded-xl transition whitespace-nowrap cursor-pointer ${
                     isSelected
-                      ? 'bg-[#881337] text-white shadow-sm'
-                      : 'bg-white dark:bg-stone-900 text-stone-600 dark:text-stone-300 border border-stone-200 dark:border-stone-800 hover:border-stone-300'
+                      ? 'dynamic-bg text-white shadow-sm'
+                      : 'bg-white dark:bg-stone-900 text-stone-600 dark:text-stone-300 border border-stone-200 dark:border-stone-800 hover:border-stone-400 dark:hover:border-stone-600 hover:text-stone-900 dark:hover:text-white'
                   }`}
                 >
                   {cat === 'all' ? 'جميع الأصناف' : cat}
@@ -395,7 +430,7 @@ export const CustomerView: React.FC<CustomerViewProps> = ({
                       <div className="text-[11px] font-bold text-amber-700 dark:text-amber-400 mb-1">
                         {item.category}
                       </div>
-                      <h3 className="text-base font-black text-stone-900 dark:text-stone-50 mb-1.5 group-hover:text-[#881337] transition-colors">
+                      <h3 className="text-base font-black text-stone-900 dark:text-stone-50 mb-1.5 group-hover:text-[var(--primary-color)] transition-colors">
                         {item.name}
                       </h3>
                       {item.description && (
@@ -407,7 +442,7 @@ export const CustomerView: React.FC<CustomerViewProps> = ({
 
                     <div className="pt-2 border-t border-stone-100 dark:border-stone-800/80 flex items-center justify-between">
                       <div>
-                        <div className="text-base font-black text-[#881337] dark:text-rose-400 tabular-nums">
+                        <div className="text-base font-black dynamic-text tabular-nums">
                           {formatLbp(item.price)}
                         </div>
                         <div className="text-[10px] text-stone-400 tabular-nums">
@@ -422,7 +457,7 @@ export const CustomerView: React.FC<CustomerViewProps> = ({
                               playChime('remove');
                               onUpdateCartQty(item.id, -1);
                             }}
-                            className="w-7 h-7 rounded-lg bg-white dark:bg-stone-700 text-stone-800 dark:text-stone-200 font-bold flex items-center justify-center hover:bg-rose-50 hover:text-rose-600 transition"
+                            className="w-7 h-7 rounded-lg bg-white dark:bg-stone-700 text-stone-800 dark:text-stone-200 font-bold flex items-center justify-center hover:bg-rose-50 hover:text-rose-600 transition cursor-pointer"
                             aria-label="إنقاص الكمية"
                           >
                             <Minus className="w-3.5 h-3.5" />
@@ -435,7 +470,7 @@ export const CustomerView: React.FC<CustomerViewProps> = ({
                               playChime('add');
                               onUpdateCartQty(item.id, 1);
                             }}
-                            className="w-7 h-7 rounded-lg bg-[#be123c] text-white font-bold flex items-center justify-center hover:bg-[#9f1239] transition"
+                            className="w-7 h-7 rounded-lg dynamic-btn font-bold flex items-center justify-center transition cursor-pointer"
                             aria-label="زيادة الكمية"
                           >
                             <Plus className="w-3.5 h-3.5" />
@@ -445,14 +480,14 @@ export const CustomerView: React.FC<CustomerViewProps> = ({
                         <div className="flex items-center gap-1">
                           <button
                             onClick={() => openCustomizeModal(item)}
-                            className="p-2 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 transition text-[11px] font-bold"
+                            className="p-2 text-stone-400 hover:text-stone-900 dark:hover:text-white transition text-[11px] font-bold cursor-pointer"
                             title="تخصيص الطلب وملاحظات"
                           >
                             تخصيص
                           </button>
                           <button
                             onClick={() => handleQuickAdd(item)}
-                            className="px-3.5 py-2 rounded-xl bg-[#be123c] hover:bg-[#9f1239] text-white text-xs font-bold shadow-sm transition flex items-center gap-1"
+                            className="px-3.5 py-2 rounded-xl dynamic-btn text-xs font-bold shadow-sm transition flex items-center gap-1 cursor-pointer active:scale-95"
                           >
                             <Plus className="w-3.5 h-3.5" />
                             <span>إضافة</span>
@@ -477,7 +512,7 @@ export const CustomerView: React.FC<CustomerViewProps> = ({
           className="fixed bottom-4 left-4 right-4 max-w-lg mx-auto z-40 bg-stone-900/95 text-white backdrop-blur-md p-3 sm:p-3.5 rounded-2xl shadow-2xl border border-stone-700/60 flex items-center justify-between"
         >
           <div className="flex items-center gap-3">
-            <div className="relative p-2 rounded-xl bg-[#be123c] text-white">
+            <div className="relative p-2 rounded-xl dynamic-btn">
               <ShoppingBag className="w-5 h-5" />
               <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-amber-400 text-stone-900 text-[10px] font-black flex items-center justify-center">
                 {totalItemsCount}
@@ -496,7 +531,7 @@ export const CustomerView: React.FC<CustomerViewProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={onOpenCartDrawer}
-              className="px-4 py-2 bg-white text-stone-900 hover:bg-stone-100 rounded-xl text-xs font-black shadow transition flex items-center gap-1.5"
+              className="px-4 py-2 bg-white text-stone-900 hover:bg-stone-100 dark:bg-stone-800 dark:text-stone-100 dark:hover:bg-stone-700 rounded-xl text-xs font-black shadow transition flex items-center gap-1.5 cursor-pointer"
             >
               <span>معاينة السلة</span>
               <ChevronDown className="w-4 h-4 rotate-180" />
@@ -609,7 +644,7 @@ export const CustomerView: React.FC<CustomerViewProps> = ({
                   <div className="pt-4 border-t border-stone-200 dark:border-stone-800 space-y-3.5 text-xs font-bold">
                     <div className="flex items-center justify-between">
                       <h4 className="text-stone-900 dark:text-stone-100 font-black text-sm flex items-center gap-1.5">
-                        <User className="w-4 h-4 text-[#881337] dark:text-rose-400" />
+                        <User className="w-4 h-4 dynamic-text" />
                         <span>معلومات مقدم الطلب</span>
                       </h4>
                       <span className="text-[10px] text-rose-600 dark:text-rose-400 font-bold bg-rose-50 dark:bg-rose-950/60 px-2 py-0.5 rounded-md border border-rose-200 dark:border-rose-800">
@@ -617,7 +652,34 @@ export const CustomerView: React.FC<CustomerViewProps> = ({
                       </span>
                     </div>
 
-                    {/* Customer Name Input (Target of CSS selector 1) */}
+                    {currentCustomer ? (
+                      <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-[11px] font-bold text-emerald-800 dark:text-emerald-200 flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <User className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>مسجل الدخول: {currentCustomer.name}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={onOpenCustomerAccount}
+                          className="text-amber-600 dark:text-amber-400 hover:underline text-[10px] cursor-pointer"
+                        >
+                          تعديل / سجل طلباتي
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="p-2.5 rounded-xl bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-[11px] font-bold text-stone-600 dark:text-stone-300 flex items-center justify-between">
+                        <span>الطلب متاح كـ زائر بدون حساب</span>
+                        <button
+                          type="button"
+                          onClick={onOpenAuthModal}
+                          className="text-amber-600 dark:text-amber-400 hover:underline text-[10px] cursor-pointer"
+                        >
+                          تسجيل حساب / دخول
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Customer Name Input */}
                     <div>
                       <div className="flex items-center justify-between mb-1">
                         <label className="text-stone-800 dark:text-stone-200 flex items-center gap-1 font-bold">
@@ -746,8 +808,12 @@ export const CustomerView: React.FC<CustomerViewProps> = ({
                         placeholder="مثال: حار زيادة، بدون بصل، صفيحة مقمرة..."
                         value={orderNotes}
                         onChange={(e) => setOrderNotes(e.target.value)}
-                        className="w-full border rounded-xl p-2.5 bg-stone-50 dark:bg-stone-800 border-stone-200 dark:border-stone-700 text-stone-900 dark:text-stone-50 text-xs font-bold focus:border-[#881337] focus:ring-2 focus:ring-[#881337]/20"
+                        className="w-full border rounded-xl p-2.5 bg-stone-50 dark:bg-stone-800 border-stone-200 dark:border-stone-700 text-stone-900 dark:text-stone-50 text-xs font-bold focus:border-[var(--primary-color)] focus:ring-2 focus:ring-[var(--primary-color)]/20"
                       />
+                    </div>
+
+                    <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-[11px] font-bold text-amber-900 dark:text-amber-200">
+                      💵 طريقة الدفع: نقداً عند الاستلام (كاش بالليرة اللبنانية أو بالدولار أو تحويل Whish Money)
                     </div>
                   </div>
                 )}
@@ -796,14 +862,14 @@ export const CustomerView: React.FC<CustomerViewProps> = ({
                       <div className="grid grid-cols-2 gap-2">
                         <button
                           onClick={handleDirectSubmit}
-                          className="py-2.5 px-3 rounded-xl bg-[#881337] hover:bg-[#700f2d] text-white font-black text-xs shadow transition flex items-center justify-center gap-1.5"
+                          className="py-2.5 px-3 rounded-xl dynamic-bg text-white font-black text-xs shadow transition flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
                         >
                           <Send className="w-3.5 h-3.5" />
                           <span>تثبيت في السيستم</span>
                         </button>
                         <button
                           onClick={onClearCart}
-                          className="py-2.5 px-3 rounded-xl bg-stone-200 dark:bg-stone-800 text-stone-700 dark:text-stone-300 font-bold text-xs hover:bg-stone-300 transition"
+                          className="py-2.5 px-3 rounded-xl bg-stone-200 dark:bg-stone-800 text-stone-700 dark:text-stone-300 font-bold text-xs hover:bg-stone-300 dark:hover:bg-stone-700 hover:text-stone-900 dark:hover:text-white transition cursor-pointer"
                         >
                           إفراغ السلة
                         </button>
@@ -834,11 +900,11 @@ export const CustomerView: React.FC<CustomerViewProps> = ({
               exit={{ scale: 0.95, opacity: 0 }}
               className="relative w-full max-w-sm bg-white dark:bg-stone-900 rounded-2xl shadow-2xl p-5 z-10 border border-stone-200 dark:border-stone-800 text-right space-y-4"
             >
-              <div className="flex items-center justify-between border-b pb-3">
+              <div className="flex items-center justify-between border-b border-stone-200 dark:border-stone-800 pb-3">
                 <h3 className="font-black text-base text-stone-900 dark:text-stone-50">
                   تخصيص: {noteModalItem.name}
                 </h3>
-                <button onClick={() => setNoteModalItem(null)} className="text-stone-400 hover:text-stone-600">
+                <button onClick={() => setNoteModalItem(null)} className="text-stone-400 hover:text-stone-900 dark:hover:text-white cursor-pointer">
                   <X className="w-5 h-5" />
                 </button>
               </div>
@@ -853,7 +919,7 @@ export const CustomerView: React.FC<CustomerViewProps> = ({
                       key={suggestion}
                       type="button"
                       onClick={() => setCustomNote(prev => prev ? `${prev}، ${suggestion}` : suggestion)}
-                      className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-200"
+                      className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700 hover:text-stone-900 dark:hover:text-white cursor-pointer"
                     >
                       + {suggestion}
                     </button>
@@ -871,13 +937,13 @@ export const CustomerView: React.FC<CustomerViewProps> = ({
               <div className="flex gap-2 pt-2">
                 <button
                   onClick={confirmCustomizeAdd}
-                  className="w-full py-2.5 rounded-xl bg-[#be123c] text-white font-black text-xs shadow hover:bg-[#9f1239] transition"
+                  className="w-full py-2.5 rounded-xl dynamic-btn font-black text-xs shadow transition cursor-pointer active:scale-95"
                 >
                   إضافة مع الملاحظة
                 </button>
                 <button
                   onClick={() => setNoteModalItem(null)}
-                  className="w-full py-2.5 rounded-xl bg-stone-200 dark:bg-stone-800 text-stone-700 dark:text-stone-300 font-bold text-xs"
+                  className="w-full py-2.5 rounded-xl bg-stone-200 dark:bg-stone-800 text-stone-700 dark:text-stone-300 font-bold text-xs hover:bg-stone-300 dark:hover:bg-stone-700 hover:text-stone-900 dark:hover:text-white cursor-pointer"
                 >
                   إلغاء
                 </button>

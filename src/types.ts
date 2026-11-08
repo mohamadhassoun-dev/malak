@@ -1,7 +1,7 @@
 export type OrderType = 'hall' | 'takeaway' | 'delivery';
 export type UserRole = 'admin' | 'customer';
 export type OrderStatus = 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled';
-export type PaymentMethod = 'cash_lbp' | 'cash_usd' | 'card' | 'mixed';
+export type PaymentMethod = 'cash_lbp' | 'cash_usd' | 'whish_money' | 'mixed';
 
 export interface MenuItem {
   id: number;
@@ -29,6 +29,7 @@ export interface TableOrder {
 
 export interface OrderRecord {
   id: string; // e.g. TRX-102938
+  customerId?: string; // links to CustomerAccount if placed by registered customer
   type: OrderType;
   tableNumber?: number;
   customerName: string;
@@ -66,6 +67,15 @@ export interface ExpenseRecord {
   notes?: string;
 }
 
+export interface CustomerAccount {
+  id: string; // e.g. CUST-1001
+  name: string;
+  phone: string;
+  address?: string;
+  password?: string;
+  createdAt: string;
+}
+
 export interface CompanyProfile {
   name: string;
   subName: string;
@@ -77,8 +87,18 @@ export interface CompanyProfile {
   taxNumber: string;
   establishmentYear: string;
   logo: string;
+  receiptLogo?: string; // Custom dedicated logo for 80mm/72mm thermal receipts and Z-Reports
+  showReceiptLogo?: boolean; // Whether to print logo on receipt/report
+  receiptHeaderNote?: string;
+  receiptFooterNote?: string;
   usdRate: number;
   primaryColor: string;
+  primaryHoverColor?: string;
+  btnColor?: string;
+  btnHoverColor?: string;
+  btnTextColor?: string;
+  accentColor?: string;
+  announcementBgColor?: string;
   currencySymbol: string;
   announcementText: string;
   headerTagline?: string;
@@ -108,8 +128,10 @@ export interface DailyClosingRecord {
 export interface AppUser {
   id: number;
   name: string;
+  username?: string; // 'malak'
+  password?: string; // 'M@lAk1998'
   role: UserRole;
-  pin: string; // 4-digit PIN for fast terminal access
+  pin?: string;
 }
 
 export interface AppState {
@@ -126,4 +148,6 @@ export interface AppState {
   closings: DailyClosingRecord[];
   users: AppUser[];
   activeUser: AppUser;
+  customers: CustomerAccount[];
+  currentCustomer: CustomerAccount | null;
 }

@@ -142,7 +142,7 @@ export const TablesView: React.FC<TablesViewProps> = ({
 
                 {isOccupied ? (
                   <div className="space-y-2 mb-4">
-                    <div className="text-lg font-black text-[#881337] dark:text-rose-400 tabular-nums">
+                    <div className="text-lg font-black dynamic-text tabular-nums">
                       {formatLbp(totalLbp)}
                       <span className="text-xs text-stone-600 dark:text-stone-400 mr-2 font-normal">
                         ({formatUsd(totalLbp, company.usdRate)})
@@ -175,7 +175,7 @@ export const TablesView: React.FC<TablesViewProps> = ({
               <div className="pt-3 border-t border-stone-200 dark:border-stone-800 flex items-center gap-2">
                 <button
                   onClick={() => onSelectTable(num)}
-                  className="flex-1 py-2 px-3 rounded-xl bg-[#881337] hover:bg-[#700f2d] text-white font-black text-xs shadow-sm transition flex items-center justify-center gap-1 cursor-pointer"
+                  className="flex-1 py-2 px-3 rounded-xl dynamic-btn text-white font-black text-xs shadow-sm transition flex items-center justify-center gap-1 cursor-pointer"
                 >
                   <Utensils className="w-3.5 h-3.5" />
                   <span>{isOccupied ? 'متابعة الطلب' : 'فتح طلب'}</span>
@@ -326,7 +326,7 @@ export const TablesView: React.FC<TablesViewProps> = ({
                   value={newTableNum}
                   onChange={(e) => setNewTableNum(e.target.value)}
                   autoFocus
-                  className="w-full p-3 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-900 dark:text-stone-50 text-base font-black text-center focus:outline-none focus:ring-2 focus:ring-[#881337]"
+                  className="w-full p-3 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-900 dark:text-stone-50 text-base font-black text-center focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]"
                 />
               </div>
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { AppState, CartItem, MenuItem, OrderRecord, OrderType, PaymentMethod, AppUser, CompanyProfile, InventoryItem, ExpenseRecord, OrderStatus } from './types';
+import { AppState, CartItem, MenuItem, OrderRecord, OrderType, PaymentMethod, AppUser, CompanyProfile, InventoryItem, ExpenseRecord, OrderStatus, CustomerAccount } from './types';
 import { loadInitialState, saveStateToStorage, subscribeToCrossTabSync, playChime, playNewOrderAlertSound } from './services/storageService';
 import { printThermalOrder, printThermalZReport } from './services/printService';
 import { Navbar } from './components/Navbar';
@@ -9,7 +9,9 @@ import { ZReportModal } from './components/ZReportModal';
 import { SqlExportModal } from './components/SqlExportModal';
 import { SettingsModal } from './components/SettingsModal';
 import { LoginModal } from './components/LoginModal';
+import { CustomerAccountModal } from './components/CustomerAccountModal';
 import { ThermalReceipt } from './components/ThermalReceipt';
+import { Phone, MessageCircle } from 'lucide-react';
 import { DEFAULT_COMPANY, DEFAULT_USERS } from './data/defaultData';
 
 export default function App() {
@@ -26,6 +28,8 @@ export default function App() {
   const [isSqlModalOpen, setIsSqlModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isCustomerAccountModalOpen, setIsCustomerAccountModalOpen] = useState(false);
+  const [authModalDefaultTab, setAuthModalDefaultTab] = useState<'customer_login' | 'customer_register' | 'admin_login'>('customer_login');
   const [isCartDrawerOpen, setIsCartDrawerOpen] = useState(false);
   const [isZReportModalOpen, setIsZReportModalOpen] = useState(false);
   const [newOrderAlert, setNewOrderAlert] = useState<OrderRecord | null>(null);
@@ -63,10 +67,33 @@ export default function App() {
     }
     localStorage.setItem('malak_dark_mode', String(isDarkMode));
 
-    const color = state.company.primaryColor || '#881337';
-    document.documentElement.style.setProperty('--primary-color', color);
-    document.documentElement.style.setProperty('--btn-color', color);
-  }, [isDarkMode, state.company.primaryColor]);
+    const root = document.documentElement;
+    const primary = state.company.primaryColor || '#881337';
+    const primaryHover = state.company.primaryHoverColor || '#700f2d';
+    const btn = state.company.btnColor || '#be123c';
+    const btnHover = state.company.btnHoverColor || '#9f1239';
+    const btnText = state.company.btnTextColor || '#ffffff';
+    const accent = state.company.accentColor || '#f59e0b';
+    const announcementBg = state.company.announcementBgColor || primary;
+
+    root.style.setProperty('--primary-color', primary);
+    root.style.setProperty('--primary-hover', primaryHover);
+    root.style.setProperty('--btn-color', btn);
+    root.style.setProperty('--btn-hover', btnHover);
+    root.style.setProperty('--btn-text-color', btnText);
+    root.style.setProperty('--accent-color', accent);
+    root.style.setProperty('--accent-gold', accent);
+    root.style.setProperty('--announcement-bg', announcementBg);
+  }, [
+    isDarkMode,
+    state.company.primaryColor,
+    state.company.primaryHoverColor,
+    state.company.btnColor,
+    state.company.btnHoverColor,
+    state.company.btnTextColor,
+    state.company.accentColor,
+    state.company.announcementBgColor
+  ]);
 
   // Active Cart helper
   const getActiveCart = (): CartItem[] => {
@@ -178,6 +205,7 @@ export default function App() {
 
     const newOrder: OrderRecord = {
       id: 'TRX-' + Math.floor(100000 + Math.random() * 900000),
+      customerId: state.currentCustomer?.id,
       type: state.currentOrderType,
       tableNumber: state.currentOrderType === 'hall' ? state.activeTable : undefined,
       customerName: details.customerName || (state.currentOrderType === 'hall' ? `طاولة ${state.activeTable}` : 'زبون'),
@@ -352,7 +380,7 @@ export default function App() {
     });
 
     setIsZReportModalOpen(false);
-    alert('تم إنهاء يوم العمل وتصفير المبيعات مع أرشفة اليومية بنجاح!');
+    playChime('success');
   };
 
   // Update order status in KDS
@@ -526,9 +554,49 @@ export default function App() {
     }));
   };
 
+  const handleCustomerLoginSuccess = (customer: CustomerAccount) => {
+    setState(prev => ({ ...prev, currentCustomer: customer }));
+    playChime('success');
+  };
+
+  const handleCustomerRegisterSuccess = (customer: CustomerAccount) => {
+    setState(prev => ({
+      ...prev,
+      customers: [customer, ...prev.customers],
+      currentCustomer: customer
+    }));
+    playChime('success');
+  };
+
+  const handleUpdateCustomer = (updated: CustomerAccount) => {
+    setState(prev => ({
+      ...prev,
+      customers: prev.customers.map(c => (c.id === updated.id ? updated : c)),
+      currentCustomer: updated
+    }));
+    playChime('success');
+  };
+
+  const handleLogoutCustomer = () => {
+    setState(prev => ({ ...prev, currentCustomer: null }));
+    setIsCustomerAccountModalOpen(false);
+  };
+
+  const handleReorder = (items: CartItem[]) => {
+    items.forEach(item => {
+      handleAddToCart(item, item.notes);
+    });
+    setIsCartDrawerOpen(true);
+  };
+
+  const handleOpenAuthModal = (tab: 'customer_login' | 'customer_register' | 'admin_login' = 'customer_login') => {
+    setAuthModalDefaultTab(tab);
+    setIsLoginModalOpen(true);
+  };
+
   const handleSelectTab = (tab: string) => {
     if (state.activeUser.role !== 'admin' && tab !== 'customer') {
-      setIsLoginModalOpen(true);
+      handleOpenAuthModal('admin_login');
       return;
     }
     setCurrentTab(tab);
@@ -555,7 +623,9 @@ export default function App() {
           onSelectTab={handleSelectTab}
           company={state.company}
           activeUser={state.activeUser}
-          onOpenLogin={() => setIsLoginModalOpen(true)}
+          currentCustomer={state.currentCustomer}
+          onOpenLogin={handleOpenAuthModal}
+          onOpenCustomerAccount={() => setIsCustomerAccountModalOpen(true)}
           onOpenSettings={() => setIsSettingsModalOpen(true)}
           onOpenSqlExport={() => setIsSqlModalOpen(true)}
           onUpdateUsdRate={handleUpdateUsdRate}
@@ -575,6 +645,9 @@ export default function App() {
             orderType={state.currentOrderType}
             tableNumber={state.activeTable}
             tablesCount={tablesCount}
+            currentCustomer={state.currentCustomer}
+            onOpenCustomerAccount={() => setIsCustomerAccountModalOpen(true)}
+            onOpenAuthModal={() => handleOpenAuthModal('customer_login')}
             onAddToCart={handleAddToCart}
             onUpdateCartQty={handleUpdateCartQty}
             onClearCart={handleClearCart}
@@ -623,8 +696,8 @@ export default function App() {
 
       {/* Footer */}
       <footer className="border-t border-stone-200 dark:border-stone-800 py-6 text-center text-xs text-stone-700 dark:text-stone-300 bg-white dark:bg-stone-900 transition-colors">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="text-right sm:text-right">
+        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="text-center sm:text-right">
             <strong className="font-black text-stone-900 dark:text-stone-100">
               {state.company.footerCopyrightText || `${state.company.name} · تأسيس ${state.company.establishmentYear} · ${state.company.city} - ${state.company.address}`}
             </strong>
@@ -634,17 +707,36 @@ export default function App() {
               </p>
             )}
           </div>
-          <div className="flex items-center gap-4 text-xs font-bold text-stone-600 dark:text-stone-400">
-            <span>هاتف: {state.company.phone}</span>
-            <span>·</span>
-            <span>واتساب: {state.company.whatsappPhone}</span>
-            <span>·</span>
-            <button
-              onClick={() => setIsSqlModalOpen(true)}
-              className="text-amber-600 dark:text-amber-400 font-bold hover:underline cursor-pointer"
+          <div className="flex flex-wrap items-center justify-center gap-3 text-xs font-bold">
+            <a
+              href={`tel:${state.company.phone.replace(/[^0-9+]/g, '')}`}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-800 dark:text-stone-200 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-stone-200 dark:hover:bg-stone-700 transition"
+              title="اتصال هاتفي مباشر"
             >
-              دليل Hostinger & SQL
-            </button>
+              <Phone className="w-3.5 h-3.5 text-amber-500" />
+              <span>هاتف: {state.company.phone}</span>
+            </a>
+
+            <a
+              href={`https://wa.me/${state.company.whatsappPhone.replace(/[^0-9]/g, '')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition"
+              title="محادثة واتساب فورية"
+            >
+              <MessageCircle className="w-3.5 h-3.5 text-emerald-500" />
+              <span>واتساب: {state.company.whatsappPhone}</span>
+            </a>
+
+            {state.activeUser.role === 'admin' && (
+              <button
+                onClick={() => setIsSqlModalOpen(true)}
+                className="text-stone-500 dark:text-stone-400 hover:text-amber-600 dark:hover:text-amber-400 text-[11px] font-bold underline cursor-pointer ml-1"
+                title="أدوات تصدير قاعدة البيانات (للمشرف فقط)"
+              >
+                نسخ احتياطي SQL
+              </button>
+            )}
           </div>
         </div>
       </footer>
@@ -670,9 +762,25 @@ export default function App() {
         onClose={() => setIsLoginModalOpen(false)}
         adminUser={adminUser}
         isAdminActive={state.activeUser.role === 'admin'}
+        customers={state.customers}
+        currentCustomer={state.currentCustomer}
         onLoginAsAdmin={handleLoginAsAdmin}
         onSwitchToCustomer={handleSwitchToCustomer}
-        onUpdateAdminPin={handleUpdateAdminPin}
+        onCustomerLoginSuccess={handleCustomerLoginSuccess}
+        onCustomerRegisterSuccess={handleCustomerRegisterSuccess}
+        defaultTab={authModalDefaultTab}
+      />
+
+      <CustomerAccountModal
+        isOpen={isCustomerAccountModalOpen}
+        onClose={() => setIsCustomerAccountModalOpen(false)}
+        currentCustomer={state.currentCustomer}
+        transactions={state.transactions}
+        usdRate={state.company.usdRate}
+        onUpdateCustomer={handleUpdateCustomer}
+        onLogoutCustomer={handleLogoutCustomer}
+        onOpenAuthModal={() => handleOpenAuthModal('customer_login')}
+        onReorder={handleReorder}
       />
 
       {/* Daily Z-Report Review & Thermal Print Modal */}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Bell,
   ChefHat,
@@ -20,7 +20,11 @@ import {
   Volume2,
   Table as TableIcon,
   Receipt,
-  FileText
+  FileText,
+  ChevronDown,
+  ChevronUp,
+  Menu as MenuIcon,
+  LayoutGrid
 } from 'lucide-react';
 import {
   AppState,
@@ -117,6 +121,7 @@ export const AdminMasterView: React.FC<AdminMasterViewProps> = ({
 }) => {
   // Master Active Sub-Section on the same page
   const [adminSection, setAdminSection] = useState<'workstation' | 'tables' | 'inventory' | 'menu' | 'transactions' | 'reports'>('workstation');
+  const [isMenuDropdownOpen, setIsMenuDropdownOpen] = useState(false);
 
   // Aggregates for master strip
   const totalSalesLbp = state.transactions.reduce((s, t) => s + t.totalLbp, 0);
@@ -124,6 +129,62 @@ export const AdminMasterView: React.FC<AdminMasterViewProps> = ({
   const netCashLbp = totalSalesLbp - totalExpensesLbp;
   const breadItem = state.inventory.find(i => i.name.includes('خبز') || i.name.includes('رغيف')) || state.inventory[0];
   const pendingKitchenCount = state.transactions.filter(t => t.status === 'pending' || t.status === 'preparing').length;
+
+  const sectionsList = [
+    {
+      id: 'workstation' as const,
+      label: 'الكاشير والمطبخ المشترك (Workstation)',
+      shortLabel: 'الكاشير والمطبخ',
+      icon: UtensilsCrossed,
+      desc: 'تسجيل الفواتير السريعة وشاشة الفرن الحجري المباشرة',
+      badge: pendingKitchenCount > 0 ? pendingKitchenCount : undefined,
+      badgeColor: 'bg-amber-400 text-stone-900'
+    },
+    {
+      id: 'tables' as const,
+      label: 'مخطط وإدارة الطاولات (Floor Plan)',
+      shortLabel: 'مخطط الطاولات',
+      icon: TableIcon,
+      desc: 'إشغال الطاولات وإغلاق الحسابات',
+      badge: undefined
+    },
+    {
+      id: 'inventory' as const,
+      label: 'المستودع ومخزون الخبز والمصاريف',
+      shortLabel: 'المستودع والخبز',
+      icon: Boxes,
+      desc: 'جرد أكياس الخبز، المواد الأولية، وسندات الصرف',
+      badge: breadItem && breadItem.qty <= breadItem.minThreshold ? 'تنبيه' : undefined,
+      badgeColor: 'bg-rose-500 text-white'
+    },
+    {
+      id: 'menu' as const,
+      label: 'قائمة الأصناف والأسعار (Menu)',
+      shortLabel: 'قائمة الأصناف',
+      icon: ChefHat,
+      desc: 'إضافة وتعديل أطباق الصفيحة والمعجنات والأسعار',
+      badge: undefined
+    },
+    {
+      id: 'transactions' as const,
+      label: 'سجل الفواتير والمعاملات (Transactions)',
+      shortLabel: 'سجل الفواتير',
+      icon: Receipt,
+      desc: 'أرشيف المبيعات وإعادة طباعة الإيصالات الحرارية',
+      badge: state.transactions.length > 0 ? state.transactions.length : undefined,
+      badgeColor: 'bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-300'
+    },
+    {
+      id: 'reports' as const,
+      label: 'التقارير والأرباح واليومية (Reports)',
+      shortLabel: 'التقارير والأرباح',
+      icon: TrendingUp,
+      desc: 'إحصائيات المبيعات، كشف Z-Report، والأرباح الصافية',
+      badge: undefined
+    }
+  ];
+
+  const currentSectionMeta = sectionsList.find(s => s.id === adminSection) || sectionsList[0];
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-4 space-y-5">
@@ -153,7 +214,7 @@ export const AdminMasterView: React.FC<AdminMasterViewProps> = ({
               onClick={() => {
                 onReprintReceipt(newOrderAlert);
               }}
-              className="px-3.5 py-2 bg-stone-950 hover:bg-stone-900 text-amber-300 rounded-xl text-xs font-black shadow transition flex items-center gap-1.5"
+              className="px-3.5 py-2 bg-stone-950 hover:bg-stone-900 text-amber-300 rounded-xl text-xs font-black shadow transition flex items-center gap-1.5 cursor-pointer"
             >
               <Printer className="w-4 h-4" />
               <span>طباعة إيصال الطلب</span>
@@ -162,14 +223,14 @@ export const AdminMasterView: React.FC<AdminMasterViewProps> = ({
               onClick={() => {
                 playNewOrderAlertSound();
               }}
-              className="p-2 bg-amber-400 hover:bg-amber-300 text-stone-900 rounded-xl"
+              className="p-2 bg-amber-400 hover:bg-amber-300 text-stone-900 rounded-xl cursor-pointer"
               title="اختبار رنة التنبيه"
             >
               <Volume2 className="w-4 h-4" />
             </button>
             <button
               onClick={onDismissNewOrderAlert}
-              className="p-2 bg-stone-900/10 hover:bg-stone-900/20 text-stone-950 rounded-xl"
+              className="p-2 bg-stone-900/10 hover:bg-stone-900/20 text-stone-950 rounded-xl cursor-pointer"
               title="إغلاق التنبيه"
             >
               <X className="w-4 h-4" />
@@ -215,7 +276,7 @@ export const AdminMasterView: React.FC<AdminMasterViewProps> = ({
         <div className="flex items-center gap-2 flex-wrap shrink-0">
           <button
             onClick={onOpenZReportModal}
-            className="px-4 py-2.5 rounded-xl bg-[#881337] hover:bg-[#700f2d] text-white text-xs font-black shadow-sm transition flex items-center gap-2"
+            className="px-4 py-2.5 rounded-xl dynamic-bg text-white text-xs font-black shadow-sm transition flex items-center gap-2 cursor-pointer active:scale-95"
             title="معاينة وطباعة كشف الحساب اليومي Z-Report"
           >
             <FileText className="w-4 h-4 text-amber-400" />
@@ -224,7 +285,7 @@ export const AdminMasterView: React.FC<AdminMasterViewProps> = ({
 
           <button
             onClick={onOpenSqlModal}
-            className="px-3.5 py-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 text-xs font-bold transition flex items-center gap-1.5"
+            className="px-3.5 py-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer hover:bg-amber-100"
             title="تصدير قاعدة بيانات SQL لـ Hostinger"
           >
             <Database className="w-4 h-4" />
@@ -233,92 +294,120 @@ export const AdminMasterView: React.FC<AdminMasterViewProps> = ({
 
           <button
             onClick={onOpenSettingsModal}
-            className="p-2.5 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-200 transition"
-            title="إعدادات المطعم والشركة"
+            className="p-2.5 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700 hover:text-stone-900 dark:hover:text-white transition cursor-pointer"
+            title="إعدادات المطعم، الألوان، والشعار"
           >
             <Sliders className="w-4 h-4" />
           </button>
         </div>
       </div>
 
-      {/* 3. Section Selector Bar on the Same Page */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 bg-stone-100 dark:bg-stone-900 p-1.5 rounded-2xl border border-stone-200 dark:border-stone-800 text-xs font-bold">
-        <button
-          onClick={() => setAdminSection('workstation')}
-          className={`px-4 py-2 rounded-xl transition flex items-center gap-2 whitespace-nowrap ${
-            adminSection === 'workstation'
-              ? 'bg-[#881337] text-white shadow'
-              : 'text-stone-600 dark:text-stone-300 hover:text-stone-900'
-          }`}
-        >
-          <UtensilsCrossed className="w-4 h-4" />
-          <span>الكاشير والمطبخ المشترك (Workstation)</span>
-          {pendingKitchenCount > 0 && (
-            <span className="w-5 h-5 rounded-full bg-amber-400 text-stone-900 text-[10px] font-black flex items-center justify-center">
-              {pendingKitchenCount}
-            </span>
-          )}
-        </button>
+      {/* 3. Non-Scrolling Vertical Dropdown Menu (Requirement 9) */}
+      <div className="relative bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-800 shadow-sm p-2 sm:p-3">
+        {/* Main Dropdown Button / Selector Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={() => setIsMenuDropdownOpen(!isMenuDropdownOpen)}
+            className="flex-1 flex items-center justify-between gap-3 p-2.5 sm:p-3 rounded-xl bg-stone-100 dark:bg-stone-800/80 hover:bg-stone-200/70 dark:hover:bg-stone-700/60 border border-stone-200 dark:border-stone-700 transition cursor-pointer"
+          >
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg dynamic-bg text-white shadow-xs">
+                {React.createElement(currentSectionMeta.icon, { className: 'w-4 h-4' })}
+              </div>
+              <div className="text-right">
+                <div className="text-[11px] text-stone-500 dark:text-stone-400 font-bold">
+                  القسم النشط حالياً: (اضغط لفتح القائمة المنسدلة ▾)
+                </div>
+                <div className="text-sm font-black text-stone-900 dark:text-stone-100 flex items-center gap-2">
+                  <span>{currentSectionMeta.label}</span>
+                  {currentSectionMeta.badge && (
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${currentSectionMeta.badgeColor || 'bg-amber-400 text-stone-950'}`}>
+                      {currentSectionMeta.badge}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
 
-        <button
-          onClick={() => setAdminSection('tables')}
-          className={`px-4 py-2 rounded-xl transition flex items-center gap-1.5 whitespace-nowrap ${
-            adminSection === 'tables'
-              ? 'bg-[#881337] text-white shadow'
-              : 'text-stone-600 dark:text-stone-300 hover:text-stone-900'
-          }`}
-        >
-          <TableIcon className="w-4 h-4" />
-          <span>مخطط الطاولات</span>
-        </button>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-stone-900 text-stone-700 dark:text-stone-200 text-xs font-bold shadow-xs">
+              <span>{isMenuDropdownOpen ? 'إغلاق القائمة' : 'تغيير القسم'}</span>
+              {isMenuDropdownOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </div>
+          </button>
 
-        <button
-          onClick={() => setAdminSection('inventory')}
-          className={`px-4 py-2 rounded-xl transition flex items-center gap-1.5 whitespace-nowrap ${
-            adminSection === 'inventory'
-              ? 'bg-[#881337] text-white shadow'
-              : 'text-stone-600 dark:text-stone-300 hover:text-stone-900'
-          }`}
-        >
-          <Boxes className="w-4 h-4" />
-          <span>المستودع ومخزون الخبز</span>
-        </button>
+          {/* Quick Shortcuts for Desktop View */}
+          <div className="hidden lg:flex items-center gap-1.5 flex-wrap">
+            {sectionsList.map(sec => {
+              const isSelected = adminSection === sec.id;
+              const IconComp = sec.icon;
+              return (
+                <button
+                  key={sec.id}
+                  onClick={() => {
+                    setAdminSection(sec.id);
+                    setIsMenuDropdownOpen(false);
+                  }}
+                  className={`px-3 py-2 rounded-xl text-xs font-black transition flex items-center gap-1.5 cursor-pointer ${
+                    isSelected
+                      ? 'dynamic-bg text-white shadow-sm'
+                      : 'bg-stone-50 dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700 hover:text-stone-950 dark:hover:text-white'
+                  }`}
+                >
+                  <IconComp className="w-3.5 h-3.5" />
+                  <span>{sec.shortLabel}</span>
+                  {sec.badge && (
+                    <span className="w-4 h-4 rounded-full bg-amber-400 text-stone-900 text-[9px] font-black flex items-center justify-center">
+                      {sec.badge}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
-        <button
-          onClick={() => setAdminSection('menu')}
-          className={`px-4 py-2 rounded-xl transition flex items-center gap-1.5 whitespace-nowrap ${
-            adminSection === 'menu'
-              ? 'bg-[#881337] text-white shadow'
-              : 'text-stone-600 dark:text-stone-300 hover:text-stone-900'
-          }`}
-        >
-          <ChefHat className="w-4 h-4" />
-          <span>قائمة الأصناف والأسعار</span>
-        </button>
-
-        <button
-          onClick={() => setAdminSection('transactions')}
-          className={`px-4 py-2 rounded-xl transition flex items-center gap-1.5 whitespace-nowrap ${
-            adminSection === 'transactions'
-              ? 'bg-[#881337] text-white shadow'
-              : 'text-stone-600 dark:text-stone-300 hover:text-stone-900'
-          }`}
-        >
-          <Receipt className="w-4 h-4" />
-          <span>سجل الفواتير والمعاملات</span>
-        </button>
-
-        <button
-          onClick={() => setAdminSection('reports')}
-          className={`px-4 py-2 rounded-xl transition flex items-center gap-1.5 whitespace-nowrap ${
-            adminSection === 'reports'
-              ? 'bg-[#881337] text-white shadow'
-              : 'text-stone-600 dark:text-stone-300 hover:text-stone-900'
-          }`}
-        >
-          <TrendingUp className="w-4 h-4" />
-          <span>التقارير والأرباح</span>
-        </button>
+        {/* Vertical Dropdown Panel (Expands Downwards without Horizontal Scrolling) */}
+        {isMenuDropdownOpen && (
+          <div className="mt-3 pt-3 border-t border-stone-200 dark:border-stone-800 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 animate-fadeIn">
+            {sectionsList.map(sec => {
+              const isSelected = adminSection === sec.id;
+              const IconComp = sec.icon;
+              return (
+                <button
+                  key={sec.id}
+                  type="button"
+                  onClick={() => {
+                    setAdminSection(sec.id);
+                    setIsMenuDropdownOpen(false);
+                  }}
+                  className={`p-3 rounded-2xl text-right transition border flex items-start gap-3 cursor-pointer ${
+                    isSelected
+                      ? 'border-transparent dynamic-bg text-white shadow-md'
+                      : 'border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800/90 text-stone-800 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-700/80 hover:text-stone-950 dark:hover:text-white'
+                  }`}
+                >
+                  <div className={`p-2 rounded-xl shrink-0 ${isSelected ? 'bg-white/20 text-white' : 'bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-300'}`}>
+                    <IconComp className="w-4 h-4" />
+                  </div>
+                  <div className="flex-grow">
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="font-black text-xs">{sec.label}</span>
+                      {sec.badge && (
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${sec.badgeColor || 'bg-amber-400 text-stone-900'}`}>
+                          {sec.badge}
+                        </span>
+                      )}
+                    </div>
+                    <p className={`text-[11px] mt-0.5 line-clamp-1 ${isSelected ? 'text-white/80' : 'text-stone-500 dark:text-stone-400'}`}>
+                      {sec.desc}
+                    </p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* 4. Section Renderings */}
@@ -355,7 +444,7 @@ export const AdminMasterView: React.FC<AdminMasterViewProps> = ({
                     >
                       <div>
                         <div className="flex items-center justify-between mb-1.5 font-black">
-                          <span className="text-[#881337] dark:text-rose-400">{order.type === 'hall' ? `طاولة ${order.tableNumber}` : order.type === 'takeaway' ? 'سفري' : 'دليفري'}</span>
+                          <span className="dynamic-text font-black">{order.type === 'hall' ? `طاولة ${order.tableNumber}` : order.type === 'takeaway' ? 'سفري' : 'دليفري'}</span>
                           <span className="font-mono text-stone-400 text-[10px]">{order.id}</span>
                         </div>
                         <div className="space-y-1 mb-2">
@@ -375,7 +464,7 @@ export const AdminMasterView: React.FC<AdminMasterViewProps> = ({
                               playChime('add');
                               onUpdateOrderStatus(order.id, 'preparing');
                             }}
-                            className="w-full py-1.5 rounded-lg bg-amber-500 text-stone-900 font-black text-xs hover:bg-amber-600"
+                            className="w-full py-1.5 rounded-lg bg-amber-500 text-stone-900 font-black text-xs hover:bg-amber-600 cursor-pointer"
                           >
                             بدء الخبز
                           </button>
@@ -385,7 +474,7 @@ export const AdminMasterView: React.FC<AdminMasterViewProps> = ({
                               playChime('success');
                               onUpdateOrderStatus(order.id, 'ready');
                             }}
-                            className="w-full py-1.5 rounded-lg bg-emerald-600 text-white font-black text-xs hover:bg-emerald-700"
+                            className="w-full py-1.5 rounded-lg bg-emerald-600 text-white font-black text-xs hover:bg-emerald-700 cursor-pointer"
                           >
                             جاهز للتسليم
                           </button>

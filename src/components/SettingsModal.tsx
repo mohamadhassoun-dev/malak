@@ -13,7 +13,10 @@ import {
   Image as ImageIcon,
   Flame,
   FileText,
-  AlertTriangle
+  Printer,
+  Sparkles,
+  AlertTriangle,
+  Receipt
 } from 'lucide-react';
 import { CompanyProfile } from '../types';
 import { DEFAULT_COMPANY, DEFAULT_LOGO, HERO_IMAGE } from '../data/defaultData';
@@ -26,6 +29,70 @@ interface SettingsModalProps {
   onResetDefaults: () => void;
 }
 
+// Color Presets for one-click styling
+const COLOR_PRESETS = [
+  {
+    name: 'العنابي الملكي (الأصلي)',
+    primary: '#881337',
+    primaryHover: '#700f2d',
+    btn: '#be123c',
+    btnHover: '#9f1239',
+    btnText: '#ffffff',
+    accent: '#f59e0b',
+    announcement: '#881337'
+  },
+  {
+    name: 'الزمردي الدمشقي الفاخر',
+    primary: '#065f46',
+    primaryHover: '#044e39',
+    btn: '#059669',
+    btnHover: '#047857',
+    btnText: '#ffffff',
+    accent: '#fbbf24',
+    announcement: '#064e3b'
+  },
+  {
+    name: 'لهيب الفرن الحجري (البرتقالي)',
+    primary: '#9a3412',
+    primaryHover: '#7c2d12',
+    btn: '#ea580c',
+    btnHover: '#c2410c',
+    btnText: '#ffffff',
+    accent: '#facc15',
+    announcement: '#7c2d12'
+  },
+  {
+    name: 'الكحلي الإمبراطوري',
+    primary: '#1e3a8a',
+    primaryHover: '#172554',
+    btn: '#2563eb',
+    btnHover: '#1d4ed8',
+    btnText: '#ffffff',
+    accent: '#f59e0b',
+    announcement: '#1e3a8a'
+  },
+  {
+    name: 'الأسود الملكي والذهب',
+    primary: '#1c1917',
+    primaryHover: '#0c0a09',
+    btn: '#d97706',
+    btnHover: '#b45309',
+    btnText: '#ffffff',
+    accent: '#f59e0b',
+    announcement: '#1c1917'
+  },
+  {
+    name: 'القهوة العربي والموكا',
+    primary: '#451a03',
+    primaryHover: '#2d1102',
+    btn: '#78350f',
+    btnHover: '#5b260b',
+    btnText: '#ffffff',
+    accent: '#fcd34d',
+    announcement: '#3f1503'
+  }
+];
+
 export const SettingsModal: React.FC<SettingsModalProps> = ({
   isOpen,
   onClose,
@@ -33,7 +100,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onSaveCompany,
   onResetDefaults,
 }) => {
-  const [activeTab, setActiveTab] = useState<'general' | 'header' | 'hero' | 'footer'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'colors' | 'receipt' | 'header' | 'hero' | 'footer'>('general');
 
   // General settings
   const [name, setName] = useState(company.name);
@@ -46,8 +113,22 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [taxNumber, setTaxNumber] = useState(company.taxNumber);
   const [establishmentYear, setEstablishmentYear] = useState(company.establishmentYear || '1998');
   const [usdRate, setUsdRate] = useState(company.usdRate.toString());
-  const [primaryColor, setPrimaryColor] = useState(company.primaryColor || '#881337');
   const [logo, setLogo] = useState(company.logo);
+
+  // Colors & Theme System
+  const [primaryColor, setPrimaryColor] = useState(company.primaryColor || '#881337');
+  const [primaryHoverColor, setPrimaryHoverColor] = useState(company.primaryHoverColor || '#700f2d');
+  const [btnColor, setBtnColor] = useState(company.btnColor || '#be123c');
+  const [btnHoverColor, setBtnHoverColor] = useState(company.btnHoverColor || '#9f1239');
+  const [btnTextColor, setBtnTextColor] = useState(company.btnTextColor || '#ffffff');
+  const [accentColor, setAccentColor] = useState(company.accentColor || '#f59e0b');
+  const [announcementBgColor, setAnnouncementBgColor] = useState(company.announcementBgColor || '#881337');
+
+  // Dedicated Receipt & Z-Report settings
+  const [receiptLogo, setReceiptLogo] = useState(company.receiptLogo || company.logo || DEFAULT_LOGO);
+  const [showReceiptLogo, setShowReceiptLogo] = useState(company.showReceiptLogo !== false);
+  const [receiptHeaderNote, setReceiptHeaderNote] = useState(company.receiptHeaderNote || 'أشهى صفيحة طرابلسية على الحطب');
+  const [receiptFooterNote, setReceiptFooterNote] = useState(company.receiptFooterNote || 'شكراً لزيارتكم ونتمنى لكم وجبة شهية!');
 
   // Header settings
   const [announcementText, setAnnouncementText] = useState(company.announcementText || '');
@@ -106,6 +187,41 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     reader.readAsDataURL(file);
   };
 
+  const handleReceiptLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        const maxDim = 250;
+        if (width > height) {
+          if (width > maxDim) {
+            height *= maxDim / width;
+            width = maxDim;
+          }
+        } else {
+          if (height > maxDim) {
+            width *= maxDim / height;
+            height = maxDim;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+        setReceiptLogo(dataUrl);
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleHeroImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -141,6 +257,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     reader.readAsDataURL(file);
   };
 
+  const applyPreset = (preset: typeof COLOR_PRESETS[0]) => {
+    setPrimaryColor(preset.primary);
+    setPrimaryHoverColor(preset.primaryHover);
+    setBtnColor(preset.btn);
+    setBtnHoverColor(preset.btnHover);
+    setBtnTextColor(preset.btnText);
+    setAccentColor(preset.accent);
+    setAnnouncementBgColor(preset.announcement);
+  };
+
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     const rate = parseFloat(usdRate) || 89500;
@@ -156,9 +282,22 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       taxNumber: taxNumber.trim(),
       establishmentYear: establishmentYear.trim(),
       usdRate: rate,
-      primaryColor,
-      announcementText: announcementText.trim(),
       logo,
+      // Colors
+      primaryColor,
+      primaryHoverColor,
+      btnColor,
+      btnHoverColor,
+      btnTextColor,
+      accentColor,
+      announcementBgColor,
+      // Receipt & Report custom settings
+      receiptLogo,
+      showReceiptLogo,
+      receiptHeaderNote: receiptHeaderNote.trim(),
+      receiptFooterNote: receiptFooterNote.trim(),
+      // Header, Hero, Footer
+      announcementText: announcementText.trim(),
       headerTagline: headerTagline.trim(),
       headerOnlineBadge: headerOnlineBadge.trim(),
       heroBadge: heroBadge.trim(),
@@ -186,7 +325,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-950/75 backdrop-blur-xs">
-      <div className="bg-white dark:bg-stone-900 rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-stone-200 dark:border-stone-800 text-right space-y-4 max-h-[92vh] overflow-y-auto flex flex-col">
+      <div className="bg-white dark:bg-stone-900 rounded-3xl max-w-3xl w-full p-6 shadow-2xl border border-stone-200 dark:border-stone-800 text-right space-y-4 max-h-[92vh] overflow-y-auto flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-stone-200 dark:border-stone-800 pb-3">
           <div className="flex items-center gap-3">
@@ -195,16 +334,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
             <div>
               <h3 className="text-base font-black text-stone-900 dark:text-stone-50">
-                لوحة تخصيص الموقع والهيدر والهيرو والفوتر
+                لوحة تخصيص النظام، الألوان، الشعار والطباعة
               </h3>
               <p className="text-xs text-stone-600 dark:text-stone-400 font-medium">
-                تحكم كامل في واجهة الزبائن، صورة الغلاف، النصوص الترحيبية، والبيانات المالية
+                تعديل الألوان، شعار الفاتورة، تفاصيل المنشأة والواجهة بواقعية وسهولة تامة
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-xl text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 transition cursor-pointer"
+            className="p-2 rounded-xl text-stone-400 hover:text-stone-900 dark:hover:text-white transition cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -215,53 +354,79 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <button
             type="button"
             onClick={() => setActiveTab('general')}
-            className={`px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+            className={`px-3 py-2 rounded-xl transition flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
               activeTab === 'general'
                 ? 'bg-[#881337] text-white shadow-sm'
                 : 'text-stone-700 dark:text-stone-300 hover:text-stone-950 dark:hover:text-white'
             }`}
           >
             <Building2 className="w-3.5 h-3.5" />
-            <span>بيانات المنشأة والمالية</span>
+            <span>بيانات المنشأة</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('colors')}
+            className={`px-3 py-2 rounded-xl transition flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+              activeTab === 'colors'
+                ? 'bg-[#881337] text-white shadow-sm'
+                : 'text-stone-700 dark:text-stone-300 hover:text-stone-950 dark:hover:text-white'
+            }`}
+          >
+            <Palette className="w-3.5 h-3.5" />
+            <span>نظام الألوان والمظهر</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('receipt')}
+            className={`px-3 py-2 rounded-xl transition flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+              activeTab === 'receipt'
+                ? 'bg-[#881337] text-white shadow-sm'
+                : 'text-stone-700 dark:text-stone-300 hover:text-stone-950 dark:hover:text-white'
+            }`}
+          >
+            <Printer className="w-3.5 h-3.5" />
+            <span>شعار الفاتورة والتقرير</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab('header')}
-            className={`px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+            className={`px-3 py-2 rounded-xl transition flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
               activeTab === 'header'
                 ? 'bg-[#881337] text-white shadow-sm'
                 : 'text-stone-700 dark:text-stone-300 hover:text-stone-950 dark:hover:text-white'
             }`}
           >
             <Layout className="w-3.5 h-3.5" />
-            <span>الهيدر والشعار والإعلانات</span>
+            <span>الهيدر والشعار</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab('hero')}
-            className={`px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+            className={`px-3 py-2 rounded-xl transition flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
               activeTab === 'hero'
                 ? 'bg-[#881337] text-white shadow-sm'
                 : 'text-stone-700 dark:text-stone-300 hover:text-stone-950 dark:hover:text-white'
             }`}
           >
             <Flame className="w-3.5 h-3.5" />
-            <span>واجهة الهيرو وصورة الغلاف</span>
+            <span>الهيرو والغلاف</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab('footer')}
-            className={`px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+            className={`px-3 py-2 rounded-xl transition flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
               activeTab === 'footer'
                 ? 'bg-[#881337] text-white shadow-sm'
                 : 'text-stone-700 dark:text-stone-300 hover:text-stone-950 dark:hover:text-white'
             }`}
           >
             <FileText className="w-3.5 h-3.5" />
-            <span>الفوتر وحقوق النشر</span>
+            <span>الفوتر</span>
           </button>
         </div>
 
@@ -292,7 +457,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-stone-700 dark:text-stone-300 mb-1">رقم هاتف الاتصال:</label>
+                  <label className="block text-stone-700 dark:text-stone-300 mb-1">رقم هاتف الاتصال (يفتح اتصال مباشر للزبون):</label>
                   <input
                     type="tel"
                     value={phone}
@@ -301,7 +466,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="block text-stone-700 dark:text-stone-300 mb-1">رقم الواتساب (مع الرمز الدولي بدون +):</label>
+                  <label className="block text-stone-700 dark:text-stone-300 mb-1">رقم الواتساب (يفتح محادثة واتساب فورية):</label>
                   <input
                     type="tel"
                     value={whatsappPhone}
@@ -342,25 +507,54 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </div>
               </div>
 
-              {/* Dollar rate & Theme color */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 rounded-2xl bg-stone-50 dark:bg-stone-800/60 border border-stone-200 dark:border-stone-700">
-                <div>
-                  <label className="block text-stone-700 dark:text-stone-300 mb-1 flex items-center gap-1">
-                    <DollarSign className="w-3.5 h-3.5 text-amber-500" />
-                    <span>سعر صرف الدولار المعتمد (ل.ل):</span>
-                  </label>
-                  <input
-                    type="number"
-                    value={usdRate}
-                    onChange={(e) => setUsdRate(e.target.value)}
-                    className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-50 font-black text-base"
-                  />
-                </div>
+              <div className="p-3.5 rounded-2xl bg-stone-50 dark:bg-stone-800/60 border border-stone-200 dark:border-stone-700">
+                <label className="block text-stone-700 dark:text-stone-300 mb-1 flex items-center gap-1">
+                  <DollarSign className="w-3.5 h-3.5 text-amber-500" />
+                  <span>سعر صرف الدولار المعتمد في الحسابات والفواتير (ل.ل):</span>
+                </label>
+                <input
+                  type="number"
+                  value={usdRate}
+                  onChange={(e) => setUsdRate(e.target.value)}
+                  className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-50 font-black text-base"
+                />
+              </div>
+            </div>
+          )}
 
-                <div>
-                  <label className="block text-stone-700 dark:text-stone-300 mb-1 flex items-center gap-1">
-                    <Palette className="w-3.5 h-3.5 text-rose-500" />
-                    <span>اللون الأساسي للنظام:</span>
+          {/* TAB 2: Coloring & Theme Customization System */}
+          {activeTab === 'colors' && (
+            <div className="space-y-4">
+              {/* Presets */}
+              <div className="p-3.5 rounded-2xl bg-stone-50 dark:bg-stone-800/60 border border-stone-200 dark:border-stone-700 space-y-2">
+                <div className="flex items-center gap-2 text-stone-900 dark:text-stone-100 font-bold">
+                  <Sparkles className="w-4 h-4 text-amber-500" />
+                  <span>نماذج ألوان جاهزة بنقرة واحدة (Color Presets):</span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {COLOR_PRESETS.map((preset, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => applyPreset(preset)}
+                      className="p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 hover:border-amber-500 transition text-right text-[11px] font-bold flex items-center gap-2 cursor-pointer shadow-xs"
+                    >
+                      <span
+                        className="w-4 h-4 rounded-full border border-stone-300 shrink-0"
+                        style={{ backgroundColor: preset.primary }}
+                      />
+                      <span className="truncate text-stone-800 dark:text-stone-200">{preset.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Detailed Color Pickers */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* 1. Primary Brand Color */}
+                <div className="p-3 rounded-2xl bg-stone-50 dark:bg-stone-800/60 border border-stone-200 dark:border-stone-700">
+                  <label className="block text-stone-700 dark:text-stone-300 mb-1.5 font-bold">
+                    اللون الأساسي للعلامة والهيدر:
                   </label>
                   <div className="flex items-center gap-2">
                     <input
@@ -369,14 +563,253 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       onChange={(e) => setPrimaryColor(e.target.value)}
                       className="w-10 h-10 rounded-xl cursor-pointer border-0 bg-transparent"
                     />
-                    <span className="font-mono text-stone-800 dark:text-stone-200 font-bold">{primaryColor}</span>
+                    <input
+                      type="text"
+                      value={primaryColor}
+                      onChange={(e) => setPrimaryColor(e.target.value)}
+                      className="flex-1 p-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 font-mono text-xs uppercase"
+                    />
                   </div>
+                </div>
+
+                {/* 2. Primary Hover Color */}
+                <div className="p-3 rounded-2xl bg-stone-50 dark:bg-stone-800/60 border border-stone-200 dark:border-stone-700">
+                  <label className="block text-stone-700 dark:text-stone-300 mb-1.5 font-bold">
+                    لون الهيدر عند التمرير (Primary Hover):
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={primaryHoverColor}
+                      onChange={(e) => setPrimaryHoverColor(e.target.value)}
+                      className="w-10 h-10 rounded-xl cursor-pointer border-0 bg-transparent"
+                    />
+                    <input
+                      type="text"
+                      value={primaryHoverColor}
+                      onChange={(e) => setPrimaryHoverColor(e.target.value)}
+                      className="flex-1 p-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 font-mono text-xs uppercase"
+                    />
+                  </div>
+                </div>
+
+                {/* 3. Action Buttons Color */}
+                <div className="p-3 rounded-2xl bg-stone-50 dark:bg-stone-800/60 border border-stone-200 dark:border-stone-700">
+                  <label className="block text-stone-700 dark:text-stone-300 mb-1.5 font-bold">
+                    لون الأزرار وإجراءات الطلب (Action Buttons):
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={btnColor}
+                      onChange={(e) => setBtnColor(e.target.value)}
+                      className="w-10 h-10 rounded-xl cursor-pointer border-0 bg-transparent"
+                    />
+                    <input
+                      type="text"
+                      value={btnColor}
+                      onChange={(e) => setBtnColor(e.target.value)}
+                      className="flex-1 p-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 font-mono text-xs uppercase"
+                    />
+                  </div>
+                </div>
+
+                {/* 4. Action Buttons Hover */}
+                <div className="p-3 rounded-2xl bg-stone-50 dark:bg-stone-800/60 border border-stone-200 dark:border-stone-700">
+                  <label className="block text-stone-700 dark:text-stone-300 mb-1.5 font-bold">
+                    لون الأزرار عند تمرير الماوس (Button Hover):
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={btnHoverColor}
+                      onChange={(e) => setBtnHoverColor(e.target.value)}
+                      className="w-10 h-10 rounded-xl cursor-pointer border-0 bg-transparent"
+                    />
+                    <input
+                      type="text"
+                      value={btnHoverColor}
+                      onChange={(e) => setBtnHoverColor(e.target.value)}
+                      className="flex-1 p-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 font-mono text-xs uppercase"
+                    />
+                  </div>
+                </div>
+
+                {/* 5. Button Text Color */}
+                <div className="p-3 rounded-2xl bg-stone-50 dark:bg-stone-800/60 border border-stone-200 dark:border-stone-700">
+                  <label className="block text-stone-700 dark:text-stone-300 mb-1.5 font-bold">
+                    لون نصوص الأزرار (Button Text Color):
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={btnTextColor}
+                      onChange={(e) => setBtnTextColor(e.target.value)}
+                      className="w-10 h-10 rounded-xl cursor-pointer border-0 bg-transparent"
+                    />
+                    <input
+                      type="text"
+                      value={btnTextColor}
+                      onChange={(e) => setBtnTextColor(e.target.value)}
+                      className="flex-1 p-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 font-mono text-xs uppercase"
+                    />
+                  </div>
+                </div>
+
+                {/* 6. Accent Gold / Highlights */}
+                <div className="p-3 rounded-2xl bg-stone-50 dark:bg-stone-800/60 border border-stone-200 dark:border-stone-700">
+                  <label className="block text-stone-700 dark:text-stone-300 mb-1.5 font-bold">
+                    لون التمييز والشارات والعروض (Accent Color):
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={accentColor}
+                      onChange={(e) => setAccentColor(e.target.value)}
+                      className="w-10 h-10 rounded-xl cursor-pointer border-0 bg-transparent"
+                    />
+                    <input
+                      type="text"
+                      value={accentColor}
+                      onChange={(e) => setAccentColor(e.target.value)}
+                      className="flex-1 p-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 font-mono text-xs uppercase"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Live Preview of Selected Theme */}
+              <div className="p-4 rounded-2xl border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 space-y-3">
+                <span className="text-[11px] font-bold text-stone-500 block">معاينة حية للمظهر الجديد:</span>
+                <div className="flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    style={{ backgroundColor: btnColor, color: btnTextColor }}
+                    className="px-4 py-2 rounded-xl font-black text-xs shadow-md transition"
+                  >
+                    زر تجريبي رئيسي
+                  </button>
+
+                  <span
+                    style={{ backgroundColor: accentColor + '25', color: accentColor, borderColor: accentColor + '50' }}
+                    className="px-3 py-1 rounded-full text-xs font-black border"
+                  >
+                    شارة تمييز وعروض
+                  </span>
+
+                  <span
+                    style={{ color: primaryColor }}
+                    className="font-black text-sm"
+                  >
+                    نص ملون بالعلامة التجارية
+                  </span>
                 </div>
               </div>
             </div>
           )}
 
-          {/* TAB 2: Header Customization */}
+          {/* TAB 3: Custom Receipt & Report Settings */}
+          {activeTab === 'receipt' && (
+            <div className="space-y-4">
+              <div className="p-3.5 rounded-2xl bg-stone-50 dark:bg-stone-800/60 border border-stone-200 dark:border-stone-700 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-stone-900 dark:text-stone-100 font-bold flex items-center gap-1.5">
+                    <Printer className="w-4 h-4 text-emerald-600" />
+                    <span>شعار الفواتير والتقارير الحرارية (Receipt & Z-Report Logo):</span>
+                  </label>
+                  <label className="px-3 py-1.5 rounded-xl bg-[#881337] text-white hover:bg-[#700f2d] cursor-pointer flex items-center gap-1.5 text-xs font-bold">
+                    <Camera className="w-3.5 h-3.5" />
+                    <span>رفع شعار خاص للفاتورة</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleReceiptLogoUpload}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  {/* Receipt Logo Thumbnail Preview */}
+                  <div className="w-20 h-20 rounded-2xl border-2 border-dashed border-stone-300 dark:border-stone-600 flex items-center justify-center p-2 bg-white shrink-0 shadow-xs">
+                    {receiptLogo ? (
+                      <img
+                        src={receiptLogo}
+                        alt="شعار الفاتورة"
+                        className="max-w-full max-h-full object-contain"
+                      />
+                    ) : (
+                      <span className="text-[10px] text-stone-400 text-center">لا يوجد شعار</span>
+                    )}
+                  </div>
+
+                  <div className="space-y-2 flex-grow">
+                    <div className="flex items-center gap-2">
+                      <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-stone-800 dark:text-stone-200">
+                        <input
+                          type="checkbox"
+                          checked={showReceiptLogo}
+                          onChange={(e) => setShowReceiptLogo(e.target.checked)}
+                          className="w-4 h-4 rounded text-rose-600 cursor-pointer"
+                        />
+                        <span>طباعة الشعار على الفواتير وتقارير الإغلاق اليومي</span>
+                      </label>
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <button
+                        type="button"
+                        onClick={() => setReceiptLogo(logo)}
+                        className="px-3 py-1.5 rounded-xl bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-300 hover:bg-stone-300 font-bold text-[11px] cursor-pointer"
+                      >
+                        استخدام نفس الشعار الرئيسي
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setReceiptLogo(DEFAULT_LOGO)}
+                        className="px-3 py-1.5 rounded-xl bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-300 hover:bg-stone-300 font-bold text-[11px] cursor-pointer"
+                      >
+                        الشعار الافتراضي
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-stone-700 dark:text-stone-300 mb-1">
+                  جملة رأس الفاتورة الحرارية (Receipt Header Note):
+                </label>
+                <input
+                  type="text"
+                  value={receiptHeaderNote}
+                  onChange={(e) => setReceiptHeaderNote(e.target.value)}
+                  placeholder="مثال: أشهى صفيحة طرابلسية على الحطب"
+                  className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-900 dark:text-stone-100"
+                />
+              </div>
+
+              <div>
+                <label className="block text-stone-700 dark:text-stone-300 mb-1">
+                  جملة نهاية الفاتورة والتقرير (Receipt Footer Note):
+                </label>
+                <input
+                  type="text"
+                  value={receiptFooterNote}
+                  onChange={(e) => setReceiptFooterNote(e.target.value)}
+                  placeholder="مثال: شكراً لزيارتكم ونتمنى لكم وجبة شهية!"
+                  className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-900 dark:text-stone-100"
+                />
+              </div>
+
+              {/* Thermal preview badge */}
+              <div className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-900 dark:text-emerald-200 text-xs">
+                ✅ متوافق 100% مع الطابعات الحرارية قياس <strong>80mm و 72mm</strong> (Xprinter, Bixolon, Epson, Rongta) وبلوتوث / USB.
+              </div>
+            </div>
+          )}
+
+          {/* TAB 4: Header Customization */}
           {activeTab === 'header' && (
             <div className="space-y-4">
               {/* Logo preview and upload */}
@@ -452,7 +885,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
           )}
 
-          {/* TAB 3: Hero Customization */}
+          {/* TAB 5: Hero Customization */}
           {activeTab === 'hero' && (
             <div className="space-y-4">
               <div>
@@ -551,7 +984,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
           )}
 
-          {/* TAB 4: Footer Customization */}
+          {/* TAB 6: Footer Customization */}
           {activeTab === 'footer' && (
             <div className="space-y-4">
               <div>
@@ -581,7 +1014,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </div>
 
               <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-xs text-amber-900 dark:text-amber-200">
-                💡 <strong>ملاحظة:</strong> أرقام الهاتف والواتساب والعنوان المدخلة في تبويب «بيانات المنشأة» ستظهر تلقائياً كروابط مباشرة للاتصال والمحادثة في الفوتر.
+                💡 <strong>ملاحظة:</strong> أرقام الهاتف والواتساب والعنوان المدخلة في تبويب «بيانات المنشأة» تظهر تلقائياً كروابط مباشرة للاتصال والمحادثة في الفوتر.
               </div>
             </div>
           )}
@@ -607,7 +1040,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2.5 rounded-xl bg-stone-200 dark:bg-stone-800 text-stone-700 dark:text-stone-300 font-bold hover:bg-stone-300 cursor-pointer transition"
+                className="px-4 py-2.5 rounded-xl bg-stone-200 dark:bg-stone-800 text-stone-700 dark:text-stone-300 font-bold hover:bg-stone-300 dark:hover:bg-stone-700 cursor-pointer transition"
               >
                 إلغاء
               </button>
@@ -615,7 +1048,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </div>
         </form>
 
-        {/* Reset Confirmation In-App Dialog (NO window.confirm) */}
+        {/* Reset Confirmation In-App Dialog */}
         {showResetConfirm && (
           <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-stone-950/80 backdrop-blur-xs">
             <div className="bg-white dark:bg-stone-900 rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-stone-200 dark:border-stone-800 text-right space-y-4">
@@ -628,7 +1061,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     استعادة الإعدادات الأصلية
                   </h4>
                   <p className="text-xs text-stone-500">
-                    هل تريد استعادة جميع إعدادات الهيدر والهيرو والفوتر الافتراضية؟
+                    هل تريد استعادة جميع إعدادات النظام والألوان والشعار الافتراضية؟
                   </p>
                 </div>
               </div>
@@ -643,7 +1076,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowResetConfirm(false)}
-                  className="py-2 px-3 rounded-xl bg-stone-200 dark:bg-stone-800 text-stone-700 dark:text-stone-300 font-bold text-xs cursor-pointer"
+                  className="py-2 px-3 rounded-xl bg-stone-200 dark:bg-stone-800 text-stone-700 dark:text-stone-300 font-bold text-xs cursor-pointer hover:bg-stone-300"
                 >
                   إلغاء
                 </button>

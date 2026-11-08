@@ -196,13 +196,17 @@ export function buildZReportHtml(params: ZReportPrintParams): string {
         </tr>
       `).join('');
 
+  const receiptLogoToUse = company.receiptLogo || company.logo;
+  const showLogo = company.showReceiptLogo !== false && Boolean(receiptLogoToUse);
+
   return `
     <div class="text-center">
-      ${company.logo ? `<img src="${company.logo}" class="logo" alt="Logo" />` : ''}
+      ${showLogo ? `<img src="${receiptLogoToUse}" class="logo" alt="Logo" />` : ''}
       <div class="title-lg">${company.name}</div>
       <div class="text-sm">${company.subName || ''}</div>
       <div class="text-sm">${company.city} - ${company.address}</div>
-      <div class="text-sm">هاتف: ${company.phone}</div>
+      <div class="text-sm">هاتف: ${company.phone} | واتساب: ${company.whatsappPhone}</div>
+      ${company.receiptHeaderNote ? `<div class="text-xs" style="font-style: italic; margin: 2px 0;">${company.receiptHeaderNote}</div>` : ''}
       ${company.taxNumber ? `<div class="text-xs">الرقم المالي: ${company.taxNumber}</div>` : ''}
       <div class="divider"></div>
       <div class="title-md">تقرير الإغلاق المالي اليومي</div>
@@ -298,13 +302,17 @@ export function buildOrderReceiptHtml(order: OrderRecord, company: CompanyProfil
     </tr>
   `).join('');
 
+  const receiptLogoToUse = company.receiptLogo || company.logo;
+  const showLogo = company.showReceiptLogo !== false && Boolean(receiptLogoToUse);
+
   return `
     <div class="text-center">
-      ${company.logo ? `<img src="${company.logo}" class="logo" alt="Logo" />` : ''}
+      ${showLogo ? `<img src="${receiptLogoToUse}" class="logo" alt="Logo" />` : ''}
       <div class="title-lg">${company.name}</div>
       <div class="text-sm">${company.subName || ''}</div>
       <div class="text-sm">${company.city} - ${company.address}</div>
       <div class="text-sm">هاتف: ${company.phone} | واتساب: ${company.whatsappPhone}</div>
+      ${company.receiptHeaderNote ? `<div class="text-xs" style="font-style: italic; margin: 2px 0;">${company.receiptHeaderNote}</div>` : ''}
       <div class="divider"></div>
       <div class="title-md">فاتورة طلب: ${order.id}</div>
       <div class="bold text-sm" style="margin-top: 2px;">النوع: ${typeLabel}</div>
@@ -343,8 +351,8 @@ export function buildOrderReceiptHtml(order: OrderRecord, company: CompanyProfil
 
     <div class="divider-double"></div>
     <div class="text-center text-sm" style="margin-top: 6px;">
-      <div class="bold">أهلاً وسهلاً بكم وشكراً لزيارتكم</div>
-      <div class="text-xs" style="margin-top: 2px;">ملك الصفيحة زكرياعروب - تأسيس 1998</div>
+      <div class="bold">${company.receiptFooterNote || 'أهلاً وسهلاً بكم وشكراً لزيارتكم'}</div>
+      <div class="text-xs" style="margin-top: 2px;">${company.name} - تأسيس ${company.establishmentYear || '1998'}</div>
     </div>
   `;
 }

@@ -188,9 +188,21 @@ export const ZReportModal: React.FC<ZReportModalProps> = ({
           {showTapePreview ? (
             <div className="p-4 rounded-2xl bg-stone-100 dark:bg-stone-800 border-2 border-stone-300 dark:border-stone-700 flex flex-col items-center">
               <div className="w-full max-w-[320px] bg-white text-black p-4 font-mono text-[11px] shadow-lg rounded-sm border-t-4 border-b-4 border-dashed border-stone-400 space-y-2">
+                {company.showReceiptLogo !== false && (company.receiptLogo || company.logo) && (
+                  <div className="flex justify-center mb-1">
+                    <img
+                      src={company.receiptLogo || company.logo}
+                      alt="Logo"
+                      className="w-11 h-11 rounded-full object-cover border border-stone-300"
+                    />
+                  </div>
+                )}
                 <div className="text-center font-bold text-sm">{company.name}</div>
                 <div className="text-center text-[10px]">{company.city} - {company.address}</div>
-                <div className="text-center text-[10px]">هاتف: {company.phone}</div>
+                <div className="text-center text-[10px]">هاتف: {company.phone} | واتساب: {company.whatsappPhone}</div>
+                {company.receiptHeaderNote && (
+                  <div className="text-center text-[9px] italic">{company.receiptHeaderNote}</div>
+                )}
                 <div className="border-b border-dashed border-black my-1"></div>
                 <div className="text-center font-bold">تقرير الإغلاق المالي (Z-REPORT)</div>
                 <div className="text-center text-[10px]">التاريخ: {todayDateStr} | {nowTimeStr}</div>
@@ -237,10 +249,10 @@ export const ZReportModal: React.FC<ZReportModalProps> = ({
                       </tr>
                     ) : (
                       sortedItems.map(([name, val]) => (
-                        <tr key={name} className="hover:bg-stone-50/50">
+                        <tr key={name} className="hover:bg-stone-50/50 dark:hover:bg-stone-800/40">
                           <td className="p-2.5 font-bold text-stone-900 dark:text-stone-100">{name}</td>
                           <td className="p-2.5 text-center font-black text-rose-600 tabular-nums">{val.qty} قطعة</td>
-                          <td className="p-2.5 font-black text-[#881337] dark:text-rose-400 tabular-nums">{formatLbp(val.total)}</td>
+                          <td className="p-2.5 font-black dynamic-text tabular-nums">{formatLbp(val.total)}</td>
                         </tr>
                       ))
                     )}

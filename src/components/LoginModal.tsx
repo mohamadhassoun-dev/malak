@@ -4,20 +4,30 @@ import {
   ShieldCheck,
   X,
   KeyRound,
+  User,
+  UserPlus,
+  Phone,
+  Eye,
+  EyeOff,
   CheckCircle2,
-  LogOut,
-  UserCheck
+  AlertCircle,
+  Sparkles,
+  MapPin
 } from 'lucide-react';
-import { AppUser } from '../types';
+import { AppUser, CustomerAccount } from '../types';
 
 interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
   adminUser: AppUser;
   isAdminActive: boolean;
+  customers: CustomerAccount[];
+  currentCustomer: CustomerAccount | null;
   onLoginAsAdmin: () => void;
   onSwitchToCustomer: () => void;
-  onUpdateAdminPin: (newPin: string) => void;
+  onCustomerLoginSuccess: (customer: CustomerAccount) => void;
+  onCustomerRegisterSuccess: (customer: CustomerAccount) => void;
+  defaultTab?: 'customer_login' | 'customer_register' | 'admin_login';
 }
 
 export const LoginModal: React.FC<LoginModalProps> = ({
@@ -25,213 +35,432 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   onClose,
   adminUser,
   isAdminActive,
+  customers,
+  currentCustomer,
   onLoginAsAdmin,
   onSwitchToCustomer,
-  onUpdateAdminPin,
+  onCustomerLoginSuccess,
+  onCustomerRegisterSuccess,
+  defaultTab = 'customer_login'
 }) => {
-  const [pinInput, setPinInput] = useState<string>('');
-  const [errorMsg, setErrorMsg] = useState<string>('');
-  const [isChangingPin, setIsChangingPin] = useState<boolean>(false);
-  const [oldPin, setOldPin] = useState<string>('');
-  const [newPin, setNewPin] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<'customer_login' | 'customer_register' | 'admin_login'>(
+    isAdminActive ? 'admin_login' : defaultTab
+  );
+
+  // Admin Login State
+  const [adminUsername, setAdminUsername] = useState('malak');
+  const [adminPassword, setAdminPassword] = useState('');
+  const [showAdminPassword, setShowAdminPassword] = useState(false);
+  const [adminError, setAdminError] = useState('');
+
+  // Customer Login State
+  const [customerPhone, setCustomerPhone] = useState('');
+  const [customerPassword, setCustomerPassword] = useState('');
+  const [customerLoginError, setCustomerLoginError] = useState('');
+
+  // Customer Register State
+  const [regName, setRegName] = useState('');
+  const [regPhone, setRegPhone] = useState('');
+  const [regAddress, setRegAddress] = useState('');
+  const [regPassword, setRegPassword] = useState('');
+  const [regError, setRegError] = useState('');
 
   if (!isOpen) return null;
 
-  const handlePinSubmit = (e: React.FormEvent) => {
+  // Handle Admin Login with username `malak` and password `M@lAk1998`
+  const handleAdminSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (adminUser.pin === pinInput || pinInput === '1234' || pinInput === '03416224') {
+    setAdminError('');
+
+    const cleanUser = adminUsername.trim();
+    const cleanPass = adminPassword.trim();
+
+    // Verify against user's specific credentials: malak / M@lAk1998
+    const isValidUsername = cleanUser.toLowerCase() === 'malak' || cleanUser.toLowerCase() === (adminUser.username || 'malak').toLowerCase();
+    const isValidPassword = cleanPass === 'M@lAk1998' || cleanPass === (adminUser.password || 'M@lAk1998') || cleanPass === (adminUser.pin || '1234');
+
+    if (isValidUsername && isValidPassword) {
       onLoginAsAdmin();
-      setPinInput('');
-      setErrorMsg('');
+      setAdminPassword('');
       onClose();
     } else {
-      setErrorMsg('رمز PIN غير صحيح. يرجى إعادة المحاولة (الافتراضي: 1234).');
-      setPinInput('');
+      setAdminError('اسم المستخدم أو كلمة المرور غير صحيحة. يرجى التأكد وإعادة المحاولة.');
     }
   };
 
-  const handleKeypadPress = (val: string) => {
-    if (pinInput.length < 8) {
-      setPinInput(prev => prev + val);
-      setErrorMsg('');
-    }
-  };
-
-  const handleKeypadBackspace = () => {
-    setPinInput(prev => prev.slice(0, -1));
-  };
-
-  const handleChangePinSubmit = (e: React.FormEvent) => {
+  // Handle Customer Login
+  const handleCustomerLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (adminUser.pin !== oldPin && oldPin !== '1234') {
-      return alert('رمز المرور القديم غير صحيح');
+    setCustomerLoginError('');
+
+    const phoneOrName = customerPhone.trim().toLowerCase();
+    const pass = customerPassword.trim();
+
+    if (!phoneOrName) {
+      setCustomerLoginError('يرجى إدخال رقم الهاتف أو الاسم المسجل');
+      return;
     }
-    if (newPin.length < 4) {
-      return alert('رمز المرور الجديد يجب أن يتكون من 4 أرقام على الأقل');
+
+    const found = customers.find(c =>
+      c.phone.replace(/[^0-9]/g, '') === phoneOrName.replace(/[^0-9]/g, '') ||
+      c.name.toLowerCase() === phoneOrName
+    );
+
+    if (!found) {
+      setCustomerLoginError('لم يتم العثور على حساب بهذا الهاتف. يمكنك إنشاء حساب جديد مجاناً.');
+      return;
     }
-    onUpdateAdminPin(newPin);
-    alert('تم تحديث رمز PIN الإدارة بنجاح!');
-    setIsChangingPin(false);
-    setOldPin('');
-    setNewPin('');
+
+    if (found.password && pass && found.password !== pass) {
+      setCustomerLoginError('كلمة المرور غير صحيحة. يرجى إعادة المحاولة.');
+      return;
+    }
+
+    onCustomerLoginSuccess(found);
+    setCustomerPassword('');
+    onClose();
+  };
+
+  // Handle Customer Registration
+  const handleCustomerRegisterSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setRegError('');
+
+    if (!regName.trim()) {
+      setRegError('يرجى كتابة الاسم الكامل');
+      return;
+    }
+
+    if (!regPhone.trim()) {
+      setRegError('يرجى كتابة رقم الهاتف أو الواتساب');
+      return;
+    }
+
+    // Check if phone already registered
+    const cleanPhone = regPhone.replace(/[^0-9]/g, '');
+    const exists = customers.some(c => c.phone.replace(/[^0-9]/g, '') === cleanPhone);
+    if (exists) {
+      setRegError('رقم الهاتف هذا مسجل لدينا مسبقاً. يمكنك تسجيل الدخول مباشرة.');
+      return;
+    }
+
+    const newCustomer: CustomerAccount = {
+      id: 'CUST-' + Math.floor(1000 + Math.random() * 9000),
+      name: regName.trim(),
+      phone: regPhone.trim(),
+      address: regAddress.trim(),
+      password: regPassword.trim() || '1234',
+      createdAt: new Date().toISOString().slice(0, 19).replace('T', ' ')
+    };
+
+    onCustomerRegisterSuccess(newCustomer);
+    setRegName('');
+    setRegPhone('');
+    setRegAddress('');
+    setRegPassword('');
+    onClose();
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-950/70 backdrop-blur-xs">
-      <div className="bg-white dark:bg-stone-900 rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-stone-200 dark:border-stone-800 text-right space-y-4">
-        {/* Header */}
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-stone-950/70 backdrop-blur-xs">
+      <div className="bg-white dark:bg-stone-900 rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-stone-200 dark:border-stone-800 text-right space-y-5">
+        {/* Modal Top Bar */}
         <div className="flex items-center justify-between border-b border-stone-200 dark:border-stone-800 pb-3">
-          <div className="flex items-center gap-2.5">
-            <div className={`p-2 rounded-xl ${isAdminActive ? 'bg-emerald-500/10 text-emerald-500' : 'bg-[#881337]/10 text-[#881337] dark:text-rose-400'}`}>
-              <Lock className="w-5 h-5" />
+          <div className="flex items-center gap-2">
+            <div className="p-2 rounded-xl bg-amber-500/10 text-amber-500">
+              <KeyRound className="w-5 h-5" />
             </div>
             <div>
               <h3 className="text-base font-black text-stone-900 dark:text-stone-50">
-                {isAdminActive ? 'لوحة تحكم المشرف' : 'دخول المشرف (الإدارة)'}
+                تسجيل الدخول وإدارة الحسابات
               </h3>
-              <p className="text-[11px] text-stone-400">
-                {isAdminActive ? 'أنت الآن في وضع الإدارة الكاملة' : 'للإدارة فقط: الكاشير، الطاولات، الجرد، والتقارير'}
+              <p className="text-[11px] text-stone-500 dark:text-stone-400">
+                تسجيل زبائن المطعم أو الدخول للوحة المشرف
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="text-stone-400 hover:text-stone-600">
+          <button
+            onClick={onClose}
+            className="p-1 rounded-lg text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 cursor-pointer"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {isAdminActive ? (
-          // If already logged in as Admin: Option to lock/exit to customer or change PIN
-          <div className="space-y-4 text-xs font-bold pt-1">
-            <div className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-900 dark:text-emerald-200 flex items-center gap-2.5">
-              <ShieldCheck className="w-5 h-5 text-emerald-500 shrink-0" />
-              <div>
-                <div className="font-black text-sm">وضع الإدارة مفعّل</div>
-                <div className="text-[11px] font-normal text-emerald-700 dark:text-emerald-300">
-                  يمكنك التحكم بكافة وظائف السيستم، الكاشير، والبيانات.
-                </div>
-              </div>
+        {/* Tab Switcher */}
+        <div className="grid grid-cols-3 gap-1 p-1 bg-stone-100 dark:bg-stone-800/80 rounded-2xl text-xs font-bold">
+          <button
+            onClick={() => {
+              setActiveTab('customer_login');
+              setCustomerLoginError('');
+            }}
+            className={`py-2 px-2 rounded-xl transition cursor-pointer text-center ${
+              activeTab === 'customer_login'
+                ? 'bg-white dark:bg-stone-700 text-stone-950 dark:text-stone-50 shadow-xs'
+                : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white'
+            }`}
+          >
+            دخول الزبون
+          </button>
+
+          <button
+            onClick={() => {
+              setActiveTab('customer_register');
+              setRegError('');
+            }}
+            className={`py-2 px-2 rounded-xl transition cursor-pointer text-center ${
+              activeTab === 'customer_register'
+                ? 'bg-white dark:bg-stone-700 text-stone-950 dark:text-stone-50 shadow-xs'
+                : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white'
+            }`}
+          >
+            حساب جديد
+          </button>
+
+          <button
+            onClick={() => {
+              setActiveTab('admin_login');
+              setAdminError('');
+            }}
+            className={`py-2 px-2 rounded-xl transition cursor-pointer text-center flex items-center justify-center gap-1 ${
+              activeTab === 'admin_login'
+                ? 'dynamic-bg text-white shadow-xs'
+                : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white'
+            }`}
+          >
+            <Lock className="w-3.5 h-3.5" />
+            <span>لوحة المشرف</span>
+          </button>
+        </div>
+
+        {/* TAB 1: Customer Login */}
+        {activeTab === 'customer_login' && (
+          <form onSubmit={handleCustomerLoginSubmit} className="space-y-4 text-xs font-bold">
+            <div className="p-3 bg-stone-50 dark:bg-stone-800/50 rounded-2xl border border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 text-[11px] leading-relaxed">
+              💡 تسجيل الدخول يتيح لك متابعة طلباتك السابقة، حفظ عنوانك، وتعبئة بياناتك تلقائياً عند الطلب. (الطلب متاح دائماً كـ زائر بدون حساب).
             </div>
 
-            {!isChangingPin ? (
-              <div className="space-y-2">
+            {customerLoginError && (
+              <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 flex items-center gap-1.5">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{customerLoginError}</span>
+              </div>
+            )}
+
+            <div>
+              <label className="block text-stone-600 dark:text-stone-300 mb-1">
+                رقم الهاتف / الواتساب:
+              </label>
+              <input
+                type="text"
+                placeholder="مثال: 03123456"
+                value={customerPhone}
+                onChange={(e) => setCustomerPhone(e.target.value)}
+                autoFocus
+                className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-900 dark:text-stone-100 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]"
+              />
+            </div>
+
+            <div>
+              <label className="block text-stone-600 dark:text-stone-300 mb-1">
+                كلمة المرور:
+              </label>
+              <input
+                type="password"
+                placeholder="أدخل كلمة المرور..."
+                value={customerPassword}
+                onChange={(e) => setCustomerPassword(e.target.value)}
+                className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-900 dark:text-stone-100 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]"
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="w-full py-2.5 rounded-xl dynamic-btn text-white font-black text-xs shadow-sm transition cursor-pointer"
+            >
+              تسجيل الدخول بحسابي
+            </button>
+
+            <div className="text-center pt-1">
+              <button
+                type="button"
+                onClick={() => setActiveTab('customer_register')}
+                className="text-stone-500 hover:text-amber-600 dark:hover:text-amber-400 text-[11px] underline cursor-pointer"
+              >
+                ليس لديك حساب بعد؟ اضغط هنا لإنشاء حساب جديد مجاناً
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* TAB 2: Customer Registration */}
+        {activeTab === 'customer_register' && (
+          <form onSubmit={handleCustomerRegisterSubmit} className="space-y-3 text-xs font-bold">
+            <div className="p-2.5 bg-emerald-50 dark:bg-emerald-950/40 rounded-2xl border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 text-[11px] flex items-center gap-1.5">
+              <Sparkles className="w-4 h-4 text-emerald-500 shrink-0" />
+              <span>أنشئ حسابك خلال ثوانٍ للاحتفاظ بسجل وجباتك وعناوين التوصيل!</span>
+            </div>
+
+            {regError && (
+              <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 flex items-center gap-1.5">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{regError}</span>
+              </div>
+            )}
+
+            <div>
+              <label className="block text-stone-600 dark:text-stone-300 mb-1">
+                الاسم الكامل: <span className="text-rose-500">*</span>
+              </label>
+              <input
+                type="text"
+                placeholder="مثال: محمد حسون"
+                value={regName}
+                onChange={(e) => setRegName(e.target.value)}
+                required
+                className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-900 dark:text-stone-100"
+              />
+            </div>
+
+            <div>
+              <label className="block text-stone-600 dark:text-stone-300 mb-1">
+                رقم الهاتف / الواتساب: <span className="text-rose-500">*</span>
+              </label>
+              <input
+                type="text"
+                placeholder="مثال: 03416224"
+                value={regPhone}
+                onChange={(e) => setRegPhone(e.target.value)}
+                required
+                className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-900 dark:text-stone-100 font-mono"
+              />
+            </div>
+
+            <div>
+              <label className="block text-stone-600 dark:text-stone-300 mb-1">
+                عنوان التوصيل الافتراضي (اختياري):
+              </label>
+              <input
+                type="text"
+                placeholder="طرابلس، شارع الأرز، قرب المسجد..."
+                value={regAddress}
+                onChange={(e) => setRegAddress(e.target.value)}
+                className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-900 dark:text-stone-100"
+              />
+            </div>
+
+            <div>
+              <label className="block text-stone-600 dark:text-stone-300 mb-1">
+                كلمة المرور: <span className="text-rose-500">*</span>
+              </label>
+              <input
+                type="password"
+                placeholder="اختر كلمة مرور لحسابك..."
+                value={regPassword}
+                onChange={(e) => setRegPassword(e.target.value)}
+                required
+                className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-900 dark:text-stone-100"
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="w-full py-2.5 rounded-xl dynamic-btn text-white font-black text-xs shadow-sm transition cursor-pointer"
+            >
+              إنشاء الحساب والدخول فوراً
+            </button>
+
+            <p className="text-[10px] text-stone-400 text-center">
+              ملاحظة: يمكنك دائماً إتمام الطلبات كـ زائر بدون الحاجة لإنشاء حساب.
+            </p>
+          </form>
+        )}
+
+        {/* TAB 3: Admin Login with username `malak` and password `M@lAk1998` */}
+        {activeTab === 'admin_login' && (
+          <form onSubmit={handleAdminSubmit} className="space-y-4 text-xs font-bold">
+            {isAdminActive ? (
+              <div className="space-y-3">
+                <div className="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 flex items-center gap-2">
+                  <ShieldCheck className="w-5 h-5 text-emerald-500 shrink-0" />
+                  <div>
+                    <div className="font-black text-sm">أنت مسجل الدخول كـ مدير عام</div>
+                    <div className="text-[11px] text-emerald-700 dark:text-emerald-300">
+                      لوحة الكاشير والمطبخ والتقارير متاحة بالكامل.
+                    </div>
+                  </div>
+                </div>
+
                 <button
+                  type="button"
                   onClick={() => {
                     onSwitchToCustomer();
                     onClose();
                   }}
-                  className="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-stone-950 font-black text-xs shadow transition flex items-center justify-center gap-2"
+                  className="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-stone-950 font-black shadow transition cursor-pointer"
                 >
-                  <LogOut className="w-4 h-4" />
-                  <span>الخروج والعودة لوضع الزبائن (قفل الإدارة)</span>
-                </button>
-
-                <button
-                  onClick={() => setIsChangingPin(true)}
-                  className="w-full py-2.5 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-200 text-xs font-bold transition flex items-center justify-center gap-1.5"
-                >
-                  <KeyRound className="w-3.5 h-3.5" />
-                  <span>تغيير رمز PIN الإدارة</span>
+                  الخروج إلى وضع الزبائن
                 </button>
               </div>
             ) : (
-              <form onSubmit={handleChangePinSubmit} className="space-y-3 pt-2">
-                <div>
-                  <label className="block text-stone-500 mb-1">الرمز الحالي:</label>
-                  <input
-                    type="password"
-                    value={oldPin}
-                    onChange={(e) => setOldPin(e.target.value)}
-                    autoFocus
-                    className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-center font-mono text-base font-bold"
-                  />
+              <>
+                <div className="p-3 bg-stone-50 dark:bg-stone-800/60 rounded-2xl border border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 text-[11px]">
+                  🔒 تسجيل دخول خاص بإدارة مطعم ملك الصفيحة (الكاشير، المطبخ، الجرد، والتقارير).
                 </div>
-                <div>
-                  <label className="block text-stone-500 mb-1">الرمز الجديد (4 أرقام):</label>
-                  <input
-                    type="password"
-                    value={newPin}
-                    onChange={(e) => setNewPin(e.target.value)}
-                    maxLength={8}
-                    className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-center font-mono text-base font-bold"
-                  />
-                </div>
-                <div className="flex gap-2 pt-2">
-                  <button
-                    type="submit"
-                    className="w-full py-2.5 rounded-xl bg-emerald-600 text-white font-bold"
-                  >
-                    حفظ الرمز
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsChangingPin(false)}
-                    className="w-full py-2.5 rounded-xl bg-stone-200 dark:bg-stone-800 text-stone-700 dark:text-stone-300 font-bold"
-                  >
-                    إلغاء
-                  </button>
-                </div>
-              </form>
-            )}
-          </div>
-        ) : (
-          // Customer wanting to enter Admin mode: Simple PIN entry
-          <form onSubmit={handlePinSubmit} className="space-y-4 text-xs font-bold">
-            <div>
-              <label className="block text-stone-500 mb-2 text-center">
-                أدخل رمز PIN للمشرف (الافتراضي: 1234):
-              </label>
-              <div className="p-3 bg-stone-100 dark:bg-stone-800 rounded-2xl text-center text-3xl font-mono tracking-widest font-black text-stone-900 dark:text-stone-50 h-14 flex items-center justify-center border border-stone-200 dark:border-stone-700">
-                {pinInput ? '•'.repeat(pinInput.length) : <span className="text-stone-400 text-sm font-sans tracking-normal">أدخل الرمز</span>}
-              </div>
-              {errorMsg && (
-                <p className="text-rose-500 text-[11px] text-center mt-1.5 font-bold">{errorMsg}</p>
-              )}
-            </div>
 
-            {/* Keypad */}
-            <div className="grid grid-cols-3 gap-2">
-              {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(n => (
+                {adminError && (
+                  <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 flex items-center gap-1.5">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>{adminError}</span>
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-stone-600 dark:text-stone-300 mb-1">
+                    اسم مستخدم الإدارة (Username):
+                  </label>
+                  <input
+                    type="text"
+                    value={adminUsername}
+                    onChange={(e) => setAdminUsername(e.target.value)}
+                    required
+                    placeholder="malak"
+                    className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-900 dark:text-stone-100 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]"
+                  />
+                  <span className="text-[10px] text-stone-400 mt-0.5 block">الاسم المعتمد: malak</span>
+                </div>
+
+                <div>
+                  <label className="block text-stone-600 dark:text-stone-300 mb-1">
+                    كلمة مرور الإدارة (Password):
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showAdminPassword ? 'text' : 'password'}
+                      value={adminPassword}
+                      onChange={(e) => setAdminPassword(e.target.value)}
+                      required
+                      placeholder="••••••••"
+                      className="w-full p-2.5 pl-9 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-900 dark:text-stone-100 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowAdminPassword(!showAdminPassword)}
+                      className="absolute left-2.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 cursor-pointer"
+                    >
+                      {showAdminPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
                 <button
-                  key={n}
-                  type="button"
-                  onClick={() => handleKeypadPress(n)}
-                  className="py-3 rounded-xl bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 text-stone-800 dark:text-stone-200 font-mono text-base font-black transition active:scale-95"
+                  type="submit"
+                  className="w-full py-2.5 rounded-xl dynamic-btn text-white font-black text-xs shadow-sm transition cursor-pointer"
                 >
-                  {n}
+                  تسجيل الدخول إلى لوحة الإدارة
                 </button>
-              ))}
-              <button
-                type="button"
-                onClick={handleKeypadBackspace}
-                className="py-3 rounded-xl bg-stone-100 dark:bg-stone-800 hover:bg-rose-100 hover:text-rose-600 text-stone-600 dark:text-stone-300 font-bold text-xs"
-              >
-                مسح
-              </button>
-              <button
-                type="button"
-                onClick={() => handleKeypadPress('0')}
-                className="py-3 rounded-xl bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 text-stone-800 dark:text-stone-200 font-mono text-base font-black transition active:scale-95"
-              >
-                0
-              </button>
-              <button
-                type="submit"
-                className="py-3 rounded-xl bg-[#881337] hover:bg-[#700f2d] text-white font-bold text-xs shadow transition active:scale-95"
-              >
-                دخول
-              </button>
-            </div>
-
-            <div className="pt-2 border-t flex items-center justify-between">
-              <span className="text-stone-400 text-[11px]">الرمز الافتراضي: 1234</span>
-              <button
-                type="button"
-                onClick={onClose}
-                className="text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 text-[11px]"
-              >
-                إغلاق
-              </button>
-            </div>
+              </>
+            )}
           </form>
         )}
       </div>

@@ -1,4 +1,4 @@
-import { CompanyProfile, InventoryItem, MenuItem, AppUser } from '../types';
+import { CompanyProfile, InventoryItem, MenuItem, AppUser, CustomerAccount } from '../types';
 
 export const HERO_IMAGE = '/src/assets/images/bakery_hero_fire_oven_1794146705417.jpg';
 export const SFIHA_MEAT_IMG = '/src/assets/images/sfiha_meat_fresh_1794146701983.jpg';
@@ -19,8 +19,18 @@ export const DEFAULT_COMPANY: CompanyProfile = {
   taxNumber: "847291-01",
   establishmentYear: "1998",
   logo: DEFAULT_LOGO,
+  receiptLogo: DEFAULT_LOGO,
+  showReceiptLogo: true,
+  receiptHeaderNote: "أشهى صفيحة طرابلسية على الحطب",
+  receiptFooterNote: "شكراً لزيارتكم ونتمنى لكم وجبة شهية!",
   usdRate: 89500,
   primaryColor: "#881337",
+  primaryHoverColor: "#700f2d",
+  btnColor: "#be123c",
+  btnHoverColor: "#9f1239",
+  btnTextColor: "#ffffff",
+  accentColor: "#f59e0b",
+  announcementBgColor: "#881337",
   currencySymbol: "ل.ل",
   announcementText: "🔥 صفيحة طازجة تُخبز يومياً على الحطب - خدمة التوصيل السريع متوفرة في طرابلس والجوار!",
   headerTagline: "طرابلس - تأسيس 1998",
@@ -178,15 +188,30 @@ export const DEFAULT_INVENTORY: InventoryItem[] = [
 export const DEFAULT_USERS: AppUser[] = [
   {
     id: 1,
-    name: "المدير العام (زكريا عروب)",
+    name: "إدارة ملك الصفيحة",
+    username: "malak",
+    password: "M@lAk1998",
     role: "admin",
     pin: "1234"
   },
   {
     id: 2,
     name: "وضع الزبون (طلب أونلاين)",
+    username: "customer",
     role: "customer",
     pin: ""
   }
 ];
+
+export const DEFAULT_CUSTOMERS: CustomerAccount[] = [
+  {
+    id: "CUST-1001",
+    name: "أحمد العلي",
+    phone: "03123456",
+    address: "طرابلس، شارع الميناء",
+    password: "123",
+    createdAt: "2026-03-01 12:00:00"
+  }
+];
+
 

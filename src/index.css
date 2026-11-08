@@ -7,7 +7,10 @@
     --primary-hover: #700f2d;
     --btn-color: #be123c;
     --btn-hover: #9f1239;
+    --btn-text-color: #ffffff;
     --accent-gold: #f59e0b;
+    --accent-color: #f59e0b;
+    --announcement-bg: #881337;
   }
 
   html {
@@ -48,20 +51,41 @@
 }
 
 .dynamic-bg {
-  background-color: var(--primary-color, #881337);
+  background-color: var(--primary-color, #881337) !important;
+}
+
+.dynamic-bg-hover:hover {
+  background-color: var(--primary-hover, #700f2d) !important;
 }
 
 .dynamic-btn {
-  background-color: var(--btn-color, #be123c);
+  background-color: var(--btn-color, #be123c) !important;
+  color: var(--btn-text-color, #ffffff) !important;
   transition: all 0.2s ease;
 }
 
 .dynamic-btn:hover {
-  background-color: var(--btn-hover, #9f1239);
+  background-color: var(--btn-hover, #9f1239) !important;
 }
 
 .dynamic-text {
-  color: var(--primary-color, #881337);
+  color: var(--primary-color, #881337) !important;
+}
+
+.dynamic-border {
+  border-color: var(--primary-color, #881337) !important;
+}
+
+.dynamic-accent-bg {
+  background-color: var(--accent-color, #f59e0b) !important;
+}
+
+.dynamic-accent-text {
+  color: var(--accent-color, #f59e0b) !important;
+}
+
+.dynamic-announcement {
+  background-color: var(--announcement-bg, #881337) !important;
 }
 
 /* Print Stylesheet for 72mm / 80mm Thermal Receipt Printers */
