@@ -634,6 +634,7 @@ export default function App() {
           isDarkMode={isDarkMode}
           onToggleDarkMode={() => setIsDarkMode(!isDarkMode)}
           onSwitchToCustomer={handleSwitchToCustomer}
+          onLogoutCustomer={handleLogoutCustomer}
         />
 
         {/* Tab Views: Customer or Unified Admin Master Console */}
@@ -648,6 +649,7 @@ export default function App() {
             currentCustomer={state.currentCustomer}
             onOpenCustomerAccount={() => setIsCustomerAccountModalOpen(true)}
             onOpenAuthModal={() => handleOpenAuthModal('customer_login')}
+            onLogoutCustomer={handleLogoutCustomer}
             onAddToCart={handleAddToCart}
             onUpdateCartQty={handleUpdateCartQty}
             onClearCart={handleClearCart}

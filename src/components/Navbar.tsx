@@ -12,7 +12,8 @@ import {
   ShoppingBag,
   User,
   Package,
-  ShieldCheck
+  ShieldCheck,
+  LogOut
 } from 'lucide-react';
 import { AppUser, CompanyProfile, CustomerAccount } from '../types';
 
@@ -32,6 +33,7 @@ interface NavbarProps {
   isDarkMode: boolean;
   onToggleDarkMode: () => void;
   onSwitchToCustomer: () => void;
+  onLogoutCustomer?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -50,6 +52,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   isDarkMode,
   onToggleDarkMode,
   onSwitchToCustomer,
+  onLogoutCustomer,
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [liveTime, setLiveTime] = useState('');
@@ -118,8 +121,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
         </div>
 
-        {/* Zone 2: Navigation Links */}
-        {isAdmin ? (
+        {/* Zone 2: Navigation Links (Admin Only) */}
+        {isAdmin && (
           <nav className="hidden lg:flex items-center gap-1.5 xl:gap-2">
             {adminTabs.map(tab => {
               const isActive = currentTab === tab.id;
@@ -138,18 +141,6 @@ export const Navbar: React.FC<NavbarProps> = ({
               );
             })}
           </nav>
-        ) : (
-          <div className="hidden md:flex items-center gap-2 text-xs font-bold text-stone-700 dark:text-stone-300">
-            <button
-              onClick={onOpenCustomerAccount}
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-stone-100 dark:bg-stone-800/80 hover:bg-stone-200 dark:hover:bg-stone-700 border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white transition cursor-pointer"
-              title="تتبع طلباتك السابقة وتفاصيل حسابك"
-            >
-              <Package className="w-3.5 h-3.5 text-amber-500" />
-              <span>{currentCustomer ? `طلباتي (${currentCustomer.name})` : 'سجل طلباتي السابقة'}</span>
-            </button>
-            <span className="text-[11px] text-stone-400">· الطلب متاح كـ زائر بدون حساب</span>
-          </div>
         )}
 
         {/* Zone 3: Actions & Controls */}
@@ -239,7 +230,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           )}
 
-          {/* AUTH & ACCOUNT BUTTON (Target of user focus CSS selector) */}
+          {/* SINGLE UNIFIED SECURE BUTTON (LOGIN / LOGOUT / ADMIN) */}
           {isAdmin ? (
             <button
               onClick={() => onOpenLogin('admin_login')}
@@ -251,33 +242,27 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           ) : currentCustomer ? (
             <button
-              onClick={onOpenCustomerAccount}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black bg-emerald-50 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-800 hover:bg-emerald-100 transition whitespace-nowrap cursor-pointer shadow-xs"
-              title={`حساب الزبون: ${currentCustomer.name} · استعراض الطلبات`}
+              onClick={onLogoutCustomer}
+              className="group flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-rose-200 dark:border-rose-800/60 bg-rose-50/80 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 hover:text-rose-900 dark:hover:text-white hover:bg-rose-100 dark:hover:bg-rose-900/50 hover:border-rose-400 transition cursor-pointer shadow-xs"
+              title={`تسجيل الخروج من حساب ${currentCustomer.name}`}
+              aria-label="تسجيل الخروج"
             >
-              <User className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-              <span>{currentCustomer.name.split(' ')[0]} (حسابي)</span>
+              <div className="w-6 h-6 rounded-lg bg-white dark:bg-rose-900/60 flex items-center justify-center border border-rose-200 dark:border-rose-700/60 group-hover:border-rose-400 transition shadow-2xs">
+                <LogOut className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
+              </div>
+              <span className="hidden sm:inline text-xs font-bold">تسجيل الخروج</span>
             </button>
           ) : (
             <button
               onClick={() => onOpenLogin('customer_login')}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black bg-amber-500 hover:bg-amber-600 text-stone-950 shadow-xs transition whitespace-nowrap cursor-pointer"
-              title="تسجيل الدخول للزبائن أو المشرف"
+              className="group flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-100/90 dark:bg-stone-800/90 text-stone-700 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:border-amber-400 dark:hover:border-amber-500 transition cursor-pointer shadow-xs"
+              title="تسجيل الدخول إلى الحساب"
+              aria-label="تسجيل الدخول إلى الحساب"
             >
-              <User className="w-3.5 h-3.5" />
-              <span>تسجيل الدخول</span>
-            </button>
-          )}
-
-          {/* Dedicated Admin Portal Direct Button if in customer view */}
-          {!isAdmin && (
-            <button
-              onClick={() => onOpenLogin('admin_login')}
-              className="p-2 rounded-xl text-stone-500 hover:text-stone-900 dark:text-stone-400 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800 transition cursor-pointer"
-              title="دخول المشرف (malak / M@lAk1998)"
-              aria-label="دخول المشرف"
-            >
-              <Lock className="w-3.5 h-3.5" />
+              <div className="w-6 h-6 rounded-lg bg-white dark:bg-stone-700 flex items-center justify-center border border-stone-300 dark:border-stone-600 group-hover:border-amber-400 dark:group-hover:border-amber-500 transition shadow-2xs">
+                <Lock className="w-3.5 h-3.5 text-stone-700 dark:text-stone-200 group-hover:text-amber-500 transition" />
+              </div>
+              <span className="hidden sm:inline text-xs font-bold">تسجيل الدخول</span>
             </button>
           )}
 

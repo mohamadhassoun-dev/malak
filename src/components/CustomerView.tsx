@@ -15,7 +15,8 @@ import {
   X,
   ChevronDown,
   User,
-  AlertCircle
+  AlertCircle,
+  Package
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { CartItem, CompanyProfile, MenuItem, OrderType, CustomerAccount } from '../types';
@@ -32,6 +33,7 @@ interface CustomerViewProps {
   currentCustomer: CustomerAccount | null;
   onOpenCustomerAccount: () => void;
   onOpenAuthModal: () => void;
+  onLogoutCustomer?: () => void;
   onAddToCart: (item: MenuItem, notes?: string) => void;
   onUpdateCartQty: (itemId: number, delta: number) => void;
   onClearCart: () => void;
@@ -276,6 +278,67 @@ export const CustomerView: React.FC<CustomerViewProps> = ({
 
       {/* Main Catalog & Order Types */}
       <main id="menu-section" className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+        {/* Customer Account Access - Displayed inside the customer page */}
+        {currentCustomer ? (
+          <div className="mb-8 bg-gradient-to-r from-emerald-500/10 via-amber-500/10 to-stone-100 dark:to-stone-900 rounded-3xl p-4 sm:p-5 border border-emerald-500/25 shadow-xs flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5 w-full md:w-auto">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-400/30 shadow-2xs">
+                <User className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-stone-500 dark:text-stone-400 font-medium">أهلاً بك مجدداً</span>
+                  <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-bold border border-emerald-300 dark:border-emerald-800">
+                    حساب نشط
+                  </span>
+                </div>
+                <h3 className="text-base sm:text-lg font-black text-stone-900 dark:text-stone-50">
+                  {currentCustomer.name}
+                </h3>
+                <p className="text-xs text-stone-500 dark:text-stone-400 font-mono">
+                  {currentCustomer.phone} {currentCustomer.address && `· ${currentCustomer.address}`}
+                </p>
+              </div>
+            </div>
+
+            {/* These 2 buttons shown inside when logged in to their account */}
+            <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto justify-end">
+              <button
+                onClick={onOpenCustomerAccount}
+                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-700 border border-stone-200 dark:border-stone-700 text-xs font-black text-stone-800 dark:text-stone-100 shadow-xs transition cursor-pointer"
+                title="استعراض ومتابعة الطلبات السابقة"
+              >
+                <Package className="w-4 h-4 text-amber-500" />
+                <span>سجل طلباتي السابقة</span>
+              </button>
+
+              <button
+                onClick={onOpenCustomerAccount}
+                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black shadow-xs transition cursor-pointer"
+                title="تعديل بيانات الحساب والعنوان"
+              >
+                <User className="w-4 h-4" />
+                <span>تفاصيل حسابي</span>
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="mb-6 p-3 sm:p-4 bg-stone-100/90 dark:bg-stone-900/90 rounded-2xl border border-stone-200 dark:border-stone-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2 text-stone-600 dark:text-stone-300 font-medium">
+              <Package className="w-4 h-4 text-amber-500 shrink-0" />
+              <span>الطلب متاح دائماً كـ زائر بدون حساب · أو سجّل دخولك لحفظ بياناتك وعناوينك.</span>
+            </div>
+            <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-end">
+              <button
+                onClick={onOpenCustomerAccount}
+                className="flex-1 sm:flex-none px-3.5 py-1.5 rounded-xl bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-700 border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300 font-bold transition cursor-pointer shadow-2xs"
+              >
+                تتبع طلب برقم الهاتف
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Order Mode Segmented Selector */}
         <div className="mb-8 p-3 sm:p-4 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 shadow-sm">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
