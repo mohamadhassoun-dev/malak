@@ -110,6 +110,8 @@ export interface CompanyProfile {
   heroCtaText?: string;
   footerCopyrightText?: string;
   footerNote?: string;
+  googleSheetsUrl?: string;
+  googleSheetsAutoSync?: boolean;
 }
 
 export interface DailyClosingRecord {

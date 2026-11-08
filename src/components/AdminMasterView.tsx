@@ -83,7 +83,7 @@ interface AdminMasterViewProps {
   onDeleteTransaction: (orderId: string) => void;
   onClearAllTransactions: () => void;
   onOpenZReportModal: () => void;
-  onOpenSqlModal: () => void;
+  onOpenGoogleSheetsModal: () => void;
   onOpenSettingsModal: () => void;
 }
 
@@ -116,7 +116,7 @@ export const AdminMasterView: React.FC<AdminMasterViewProps> = ({
   onDeleteTransaction,
   onClearAllTransactions,
   onOpenZReportModal,
-  onOpenSqlModal,
+  onOpenGoogleSheetsModal,
   onOpenSettingsModal,
 }) => {
   // Master Active Sub-Section on the same page
@@ -284,12 +284,12 @@ export const AdminMasterView: React.FC<AdminMasterViewProps> = ({
           </button>
 
           <button
-            onClick={onOpenSqlModal}
-            className="px-3.5 py-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer hover:bg-amber-100"
-            title="تصدير قاعدة بيانات SQL لـ Hostinger"
+            onClick={onOpenGoogleSheetsModal}
+            className="px-3.5 py-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer hover:bg-emerald-100"
+            title="ربط ومزامنة جداول Google Sheets & Excel"
           >
-            <Database className="w-4 h-4" />
-            <span>قاعدة SQL</span>
+            <FileSpreadsheet className="w-4 h-4" />
+            <span>جداول Google & Excel</span>
           </button>
 
           <button

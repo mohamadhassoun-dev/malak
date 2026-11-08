@@ -5,6 +5,7 @@ import {
   Sun,
   Moon,
   Database,
+  FileSpreadsheet,
   Sliders,
   DollarSign,
   Lock,
@@ -26,7 +27,7 @@ interface NavbarProps {
   onOpenLogin: (defaultTab?: 'customer_login' | 'customer_register' | 'admin_login') => void;
   onOpenCustomerAccount: () => void;
   onOpenSettings: () => void;
-  onOpenSqlExport: () => void;
+  onOpenGoogleSheets: () => void;
   onUpdateUsdRate: (rate: number) => void;
   cartCount: number;
   onOpenCartDrawer: () => void;
@@ -45,7 +46,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenLogin,
   onOpenCustomerAccount,
   onOpenSettings,
-  onOpenSqlExport,
+  onOpenGoogleSheets,
   onUpdateUsdRate,
   cartCount,
   onOpenCartDrawer,
@@ -179,15 +180,15 @@ export const Navbar: React.FC<NavbarProps> = ({
             )}
           </div>
 
-          {/* Hostinger SQL Export Tool (Admin only) */}
+          {/* Google Sheets & Excel Sync Tool (Admin only) */}
           {isAdmin && (
             <button
-              onClick={onOpenSqlExport}
-              className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900/60 transition whitespace-nowrap cursor-pointer"
-              title="تصدير قاعدة بيانات SQL لـ Hostinger"
+              onClick={onOpenGoogleSheets}
+              className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition whitespace-nowrap cursor-pointer"
+              title="ربط قاعدة بيانات Google Sheets و Excel عبر Apps Script"
             >
-              <Database className="w-3.5 h-3.5" />
-              <span>قاعدة SQL</span>
+              <FileSpreadsheet className="w-3.5 h-3.5" />
+              <span>Google Sheets & Excel</span>
             </button>
           )}
 
@@ -304,13 +305,13 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div className="flex items-center justify-between pt-1 text-xs">
             <button
               onClick={() => {
-                onOpenSqlExport();
+                onOpenGoogleSheets();
                 setMobileMenuOpen(false);
               }}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 rounded-lg font-bold"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 rounded-lg font-bold"
             >
-              <Database className="w-3.5 h-3.5" />
-              <span>تصدير Hostinger SQL</span>
+              <FileSpreadsheet className="w-3.5 h-3.5" />
+              <span>Google Sheets & Excel</span>
             </button>
 
             <button

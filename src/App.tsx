@@ -6,13 +6,19 @@ import { Navbar } from './components/Navbar';
 import { CustomerView } from './components/CustomerView';
 import { AdminMasterView } from './components/AdminMasterView';
 import { ZReportModal } from './components/ZReportModal';
-import { SqlExportModal } from './components/SqlExportModal';
+import { GoogleSheetsModal } from './components/GoogleSheetsModal';
 import { SettingsModal } from './components/SettingsModal';
 import { LoginModal } from './components/LoginModal';
 import { CustomerAccountModal } from './components/CustomerAccountModal';
 import { ThermalReceipt } from './components/ThermalReceipt';
 import { Phone, MessageCircle } from 'lucide-react';
 import { DEFAULT_COMPANY, DEFAULT_USERS } from './data/defaultData';
+import {
+  syncOrderToGoogleSheets,
+  syncCustomerToGoogleSheets,
+  syncClosingToGoogleSheets,
+  syncExpenseToGoogleSheets
+} from './services/googleSheetsService';
 
 export default function App() {
   const [state, setState] = useState<AppState>(() => loadInitialState());
@@ -25,7 +31,7 @@ export default function App() {
   });
 
   // Modals & Alerts
-  const [isSqlModalOpen, setIsSqlModalOpen] = useState(false);
+  const [isGoogleSheetsModalOpen, setIsGoogleSheetsModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isCustomerAccountModalOpen, setIsCustomerAccountModalOpen] = useState(false);
@@ -249,6 +255,13 @@ export default function App() {
     printThermalOrder(newOrder, state.company);
     setReportPrintData(null);
     setPrintOrder(newOrder);
+
+    // Auto-sync order to Google Sheets & Excel if configured
+    if (state.company.googleSheetsUrl && state.company.googleSheetsAutoSync !== false) {
+      syncOrderToGoogleSheets(newOrder, state.company.googleSheetsUrl).catch(err => {
+        console.warn('Google Sheets background sync notice:', err);
+      });
+    }
   };
 
   // Direct order submission from Customer Storefront
@@ -381,6 +394,12 @@ export default function App() {
 
     setIsZReportModalOpen(false);
     playChime('success');
+
+    if (state.company.googleSheetsUrl && state.company.googleSheetsAutoSync !== false) {
+      syncClosingToGoogleSheets(closingRecord, state.company.googleSheetsUrl).catch(err => {
+        console.warn('Google Sheets background sync notice:', err);
+      });
+    }
   };
 
   // Update order status in KDS
@@ -452,17 +471,21 @@ export default function App() {
   };
 
   const handleAddExpense = (exp: Omit<ExpenseRecord, 'id' | 'date'>) => {
+    const newExp: ExpenseRecord = {
+      ...exp,
+      id: Date.now(),
+      date: new Date().toLocaleDateString('ar-LB') + ' ' + new Date().toLocaleTimeString('ar-LB', { hour: '2-digit', minute: '2-digit' })
+    };
     setState(prev => ({
       ...prev,
-      expenses: [
-        {
-          ...exp,
-          id: Date.now(),
-          date: new Date().toLocaleDateString('ar-LB') + ' ' + new Date().toLocaleTimeString('ar-LB', { hour: '2-digit', minute: '2-digit' })
-        },
-        ...prev.expenses
-      ]
+      expenses: [newExp, ...prev.expenses]
     }));
+
+    if (state.company.googleSheetsUrl && state.company.googleSheetsAutoSync !== false) {
+      syncExpenseToGoogleSheets(newExp, state.company.googleSheetsUrl).catch(err => {
+        console.warn('Google Sheets background sync notice:', err);
+      });
+    }
   };
 
   const handleDeleteExpense = (id: number) => {
@@ -566,6 +589,12 @@ export default function App() {
       currentCustomer: customer
     }));
     playChime('success');
+
+    if (state.company.googleSheetsUrl && state.company.googleSheetsAutoSync !== false) {
+      syncCustomerToGoogleSheets(customer, state.company.googleSheetsUrl).catch(err => {
+        console.warn('Google Sheets background sync notice:', err);
+      });
+    }
   };
 
   const handleUpdateCustomer = (updated: CustomerAccount) => {
@@ -627,7 +656,7 @@ export default function App() {
           onOpenLogin={handleOpenAuthModal}
           onOpenCustomerAccount={() => setIsCustomerAccountModalOpen(true)}
           onOpenSettings={() => setIsSettingsModalOpen(true)}
-          onOpenSqlExport={() => setIsSqlModalOpen(true)}
+          onOpenGoogleSheets={() => setIsGoogleSheetsModalOpen(true)}
           onUpdateUsdRate={handleUpdateUsdRate}
           cartCount={cart.reduce((s, i) => s + i.quantity, 0)}
           onOpenCartDrawer={() => setIsCartDrawerOpen(true)}
@@ -690,7 +719,7 @@ export default function App() {
             onDeleteTransaction={handleDeleteTransaction}
             onClearAllTransactions={handleClearAllTransactions}
             onOpenZReportModal={handlePrintDailyReport}
-            onOpenSqlModal={() => setIsSqlModalOpen(true)}
+            onOpenGoogleSheetsModal={() => setIsGoogleSheetsModalOpen(true)}
             onOpenSettingsModal={() => setIsSettingsModalOpen(true)}
           />
         )}
@@ -732,11 +761,11 @@ export default function App() {
 
             {state.activeUser.role === 'admin' && (
               <button
-                onClick={() => setIsSqlModalOpen(true)}
-                className="text-stone-500 dark:text-stone-400 hover:text-amber-600 dark:hover:text-amber-400 text-[11px] font-bold underline cursor-pointer ml-1"
-                title="أدوات تصدير قاعدة البيانات (للمشرف فقط)"
+                onClick={() => setIsGoogleSheetsModalOpen(true)}
+                className="text-stone-500 dark:text-stone-400 hover:text-emerald-600 dark:hover:text-emerald-400 text-[11px] font-bold underline cursor-pointer ml-1"
+                title="إدارة وتصدير قاعدة بيانات Google Sheets & Excel"
               >
-                نسخ احتياطي SQL
+                قاعدة Google Sheets & Excel
               </button>
             )}
           </div>
@@ -744,10 +773,12 @@ export default function App() {
       </footer>
 
       {/* Global Modals */}
-      <SqlExportModal
-        isOpen={isSqlModalOpen}
-        onClose={() => setIsSqlModalOpen(false)}
+      <GoogleSheetsModal
+        isOpen={isGoogleSheetsModalOpen}
+        onClose={() => setIsGoogleSheetsModalOpen(false)}
+        company={state.company}
         state={state}
+        onSaveCompany={handleSaveCompany}
         onRestoreState={(restored) => setState(restored)}
       />
 
